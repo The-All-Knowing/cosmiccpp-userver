@@ -17,7 +17,7 @@ namespace Allocation::Domain
         /// @param versionNumber Номер версии агрегата.
         /// @param isNew Новый агрегат или уже существовал.
         explicit Product(const std::string& sku, const std::vector<Batch>& batches = {},
-            size_t versionNumber = 0, bool isNew = true);
+            size_t versionNumber = 0);
 
         /// @brief Устанавливает флаг изменённости.
         /// @param modified Новый флаг изменённости.

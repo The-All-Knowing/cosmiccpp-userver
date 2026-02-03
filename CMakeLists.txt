@@ -23,18 +23,12 @@ add_library(
     ${PROJECT_NAME}_objs OBJECT
     src/Domain/Product/Batch.cpp
     src/Domain/Product/Product.cpp
-    src/Utilities/Common.cpp
-    src/greeting.cpp #
-    src/hello.cpp #
+    src/ServiceLayer/MessageBus/MessageBus.cpp
+    src/Adapters/MessageBus/MessageBusComponent.cpp
 )
 target_link_libraries(
     ${PROJECT_NAME}_objs
     PUBLIC userver::core #
-)
-target_precompile_headers(
-    ${PROJECT_NAME}_objs 
-    PRIVATE
-    "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/src/Precompile.hpp>"
 )
 
 # The Service
@@ -44,16 +38,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 # Unit Tests
 add_executable(
     ${PROJECT_NAME}_unittest
-    src/greeting_test.cpp
     src/Tests/Unit/Batches.cpp
+    src/Tests/Unit/Products.cpp
+    src/Tests/Unit/Handlers.cpp
+    src/Tests/Utilities/Common.cpp
 )
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
 
 # Benchmarks
-add_executable(${PROJECT_NAME}_benchmark src/greeting_benchmark.cpp)
-target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs userver::ubench)
-add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
+# add_executable(${PROJECT_NAME}_benchmark src/greeting_benchmark.cpp)
+# target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs userver::ubench)
+# add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
 
 # Functional testing
 userver_testsuite_add_simple()

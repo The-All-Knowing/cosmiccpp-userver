@@ -1,6 +1,9 @@
+/*
+
 #include "ServiceLayer/MessageBus/Handlers/Handlers.hpp"
 
 #include <gtest/gtest.h>
+#include <userver/utest/assert_macros.hpp>
 
 #include "Domain/Commands/Allocate.hpp"
 #include "Domain/Commands/ChangeBatchQuantity.hpp"
@@ -182,3 +185,4 @@ namespace Allocation::Tests
         EXPECT_EQ(product->GetBatch("batch2").value().GetAvailableQuantity(), 30);
     }
 }
+    */

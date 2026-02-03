@@ -21,11 +21,6 @@ namespace Allocation::Domain
         Batch(const std::string& reference, const std::string& sku, size_t quantity,
             std::optional<std::chrono::year_month_day> eta = std::nullopt);
 
-        /// @brief Копирующий оператор присваивания.
-        /// @param other Другой объект.
-        /// @return Текущий объект.
-        Batch& operator=(const Batch& other) = default;
-
         /// @brief Устанавливает количество продукции в партии.
         /// @param newQty Новое количество.
         void SetPurchasedQuantity(size_t newQty) noexcept;

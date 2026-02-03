@@ -7,11 +7,9 @@
 #include <userver/server/handlers/ping.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
-
-
+#include "ServiceLayer/MessageBus/MessageBus.hpp"
 #include <userver/utils/daemon_run.hpp>
 
-#include <hello.hpp>
 
 int main(int argc, char* argv[]) {
     auto component_list =
@@ -22,7 +20,7 @@ int main(int argc, char* argv[]) {
             .Append<userver::clients::dns::Component>()
             .Append<userver::server::handlers::TestsControl>()
             .Append<userver::congestion_control::Component>()
-            .Append<Allocation_userver::Hello>()
+            .Append<Allocation::ServiceLayer::MessageBus>()
         ;
 
     return userver::utils::DaemonMain(argc, argv, component_list);

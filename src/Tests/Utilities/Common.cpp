@@ -1,4 +1,6 @@
-#include "Common_test.hpp"
+#include "Common.hpp"
+
+#include <userver/utils/uuid7.hpp>
 
 
 namespace Allocation::Tests
@@ -12,7 +14,7 @@ namespace Allocation::Tests
 
     std::string RandomSuffix()
     {
-        return Poco::UUIDGenerator::defaultGenerator().createRandom().toString().substr(0, 6);
+        return userver::utils::generators::GenerateUuidV7();
     }
 
     std::string RandomSku(const std::string& name) { return "sku-" + name + "-" + RandomSuffix(); }

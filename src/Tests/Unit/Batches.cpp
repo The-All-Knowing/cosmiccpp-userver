@@ -1,7 +1,7 @@
-#include <userver/utest/utest.hpp>
+#include <gtest/gtest.h>
 
 #include "Domain/Product/Batch.hpp"
-#include "Tests/Utilities/Common_test.hpp"
+#include "Tests/Utilities/Common.hpp"
 
 
 namespace Allocation::Tests
@@ -12,9 +12,7 @@ namespace Allocation::Tests
         const year_month_day today{2007y, October, 18d};
         Domain::Batch batch("batch-001", "SMALL-TABLE", 20, today);
         Domain::OrderLine line("order-ref", "SMALL-TABLE", 2);
-
         batch.Allocate(line);
-
         EXPECT_EQ(batch.GetAvailableQuantity(), 18);
     }
 

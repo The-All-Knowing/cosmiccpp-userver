@@ -1,5 +1,7 @@
 #include "Batch.hpp"
 
+#include <stdexcept>
+
 
 namespace Allocation::Domain
 {

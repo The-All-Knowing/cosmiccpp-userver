@@ -34,6 +34,27 @@ components_manager:
 
         congestion-control:
 
+
+        message-bus:
+            command-handlers:
+              - type: "CreateAllocationCommand"
+                handler: "AllocationCommandHandler"  # имя класса/функции-обработчика
+                task-processor: "main-task-processor"
+
+              - type: "CancelAllocationCommand"
+                handler: "CancellationHandler"
+                task-processor: "io-task-processor"
+
+            event-handlers:
+              - type: "OutOfStockEvent"
+                handler: "StockAlertHandler"
+                task-processor: "main-task-processor"
+
+            # Опционально: настройки очереди, таймауты и т.д.
+            queue-size: 1000
+            timeout-sec: 30
+
+
         http-client:
         http-client-core:
             load-enabled: $is_testing

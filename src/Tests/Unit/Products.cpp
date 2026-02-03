@@ -1,11 +1,9 @@
-#include "Domain/Product/Product.hpp"
-
 #include <gtest/gtest.h>
 
 #include "Domain/Events/Allocated.hpp"
 #include "Domain/Events/OutOfStock.hpp"
-#include "Tests/Utilities/Common_test.hpp"
-#include "Utilities/Common.hpp"
+#include "Domain/Product/Product.hpp"
+#include "Common.hpp"
 
 
 namespace Allocation::Tests

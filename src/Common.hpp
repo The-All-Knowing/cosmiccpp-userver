@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <concepts>
 #include <memory>
 
@@ -16,14 +17,20 @@ namespace Allocation
     /// @param days Количество дней для добавления.
     /// @return Новая корректная дата с добавленными днями.
     [[nodiscard]] std::chrono::year_month_day operator+(
-        const std::chrono::year_month_day& ymd, const std::chrono::days& days) noexcept;
+        const std::chrono::year_month_day& ymd, const std::chrono::days& days) noexcept
+    {
+        return std::chrono::year_month_day{std::chrono::sys_days{ymd} + days};
+    }
 
     /// @brief Перегружает оператор + для добавления дней к дате.
     /// @param days Количество дней для добавления.
     /// @param ymd Дата в формате std::chrono.
     /// @return Новая корректная дата с добавленными днями.
     [[nodiscard]] std::chrono::year_month_day operator+(
-        const std::chrono::days& days, const std::chrono::year_month_day& ymd) noexcept;
+        const std::chrono::days& days, const std::chrono::year_month_day& ymd) noexcept
+    {
+        return ymd + days;
+    }
 
     /// @brief Концепт для типа в Make.
     template <typename T>

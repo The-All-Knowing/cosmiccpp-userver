@@ -1,10 +1,13 @@
 #include "Product.hpp"
 
+#include <ranges>
+#include <algorithm>
+
 #include "Domain/Commands/Allocate.hpp"
 #include "Domain/Events/Allocated.hpp"
 #include "Domain/Events/Deallocated.hpp"
 #include "Domain/Events/OutOfStock.hpp"
-#include "Utilities/Common.hpp"
+#include "Common.hpp"
 
 
 namespace Allocation::Domain
