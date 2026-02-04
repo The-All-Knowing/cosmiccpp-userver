@@ -1,28 +1,21 @@
 #include "Product.hpp"
 
-#include <ranges>
-#include <algorithm>
-
+#include "Common.hpp"
 #include "Domain/Commands/Allocate.hpp"
 #include "Domain/Events/Allocated.hpp"
 #include "Domain/Events/Deallocated.hpp"
 #include "Domain/Events/OutOfStock.hpp"
-#include "Common.hpp"
 
 
 namespace Allocation::Domain
 {
     Product::Product(
-        const std::string& sku, const std::vector<Batch>& batches, size_t versionNumber, bool isNew)
-        : _sku(sku), _versionNumber(versionNumber), _isModified(isNew)
+        const std::string& sku, const std::vector<Batch>& batches, size_t versionNumber)
+        : _sku(sku), _versionNumber(versionNumber)
     {
         for (const auto& batch : batches)
             _referenceByBatches.insert({batch.GetReference(), batch});
     }
-
-    void Product::SetModified(bool modified) noexcept { _isModified = modified; }
-
-    bool Product::IsModified() const noexcept { return _isModified; }
 
     bool Product::AddBatch(const Batch& batch)
     {
@@ -34,7 +27,6 @@ namespace Allocation::Domain
         auto batchRef = batch.GetReference();
         _referenceByBatches.insert({batchRef, batch});
         _modifiedBatchRefs.insert(batchRef);
-        _isModified = true;
         return true;
     }
 
@@ -54,7 +46,6 @@ namespace Allocation::Domain
             _referenceByBatches.insert({batchRef, batch});
             _modifiedBatchRefs.insert(batchRef);
         }
-        _isModified = true;
         return true;
     }
 
@@ -82,7 +73,6 @@ namespace Allocation::Domain
             batch->Allocate(line);
             _versionNumber++;
             _modifiedBatchRefs.insert(batchRef);
-            _isModified = true;
             _messages.push_back(
                 Make<Events::Allocated>(line.reference, line.sku, line.quantity, batchRef));
             return batchRef;
@@ -100,7 +90,6 @@ namespace Allocation::Domain
         auto& batch = it->second;
         batch.SetPurchasedQuantity(newQty);
         _modifiedBatchRefs.insert(batch.GetReference());
-        _isModified = true;
 
         while (batch.GetAvailableQuantity() < 0)
         {

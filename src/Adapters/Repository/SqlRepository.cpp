@@ -26,9 +26,9 @@ namespace Allocation::Adapters::Repository
             it != _skuToProductAndInitVersion.end())
             return it->second.first;
 
-        auto result = _transaction.Execute(Allocation::sql_queries::GetProductBySku, sku);
+        auto result = _transaction.Execute(sql::kGetProductBySku, sku);
         auto productRow = result.AsSingleRow<DTO::ProductRow>();
-        result = _transaction.Execute(Allocation::sql_queries::GetBatchesBySku, sku);
+        result = _transaction.Execute(sql::kGetBatchesBySku, sku);
         auto batchRows = result.AsVector<DTO::BatchRow>();
 
         return _skuToProductAndInitVersion

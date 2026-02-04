@@ -1,7 +1,6 @@
 #pragma once
 
-#include <functional>
-#include <string>
+#include "Precompile.hpp"
 
 
 namespace Allocation::Domain

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Precompile.hpp"
 #include "Batch.hpp"
 #include "Domain/Ports/IMessage.hpp"
 
@@ -15,17 +16,12 @@ namespace Allocation::Domain
         /// @param sku Артикул продукции.
         /// @param batches Список партий заказа продукции.
         /// @param versionNumber Номер версии агрегата.
-        /// @param isNew Новый агрегат или уже существовал.
         explicit Product(const std::string& sku, const std::vector<Batch>& batches = {},
             size_t versionNumber = 0);
 
         /// @brief Устанавливает флаг изменённости.
         /// @param modified Новый флаг изменённости.
         void SetModified(bool modified) noexcept;
-
-        /// @brief Проверяет, был ли агрегат изменён.
-        /// @return true — если агрегат изменён, иначе false.
-        [[nodiscard]] bool IsModified() const noexcept;
 
         /// @brief Добавляет партию поставки к агрегату.
         /// @param batch Добавляемая партия заказа.
@@ -89,7 +85,6 @@ namespace Allocation::Domain
         std::unordered_set<std::string> _modifiedBatchRefs;
         std::vector<Domain::IMessagePtr> _messages;
         size_t _versionNumber;
-        bool _isModified;
     };
 
     using ProductPtr = std::shared_ptr<Product>;

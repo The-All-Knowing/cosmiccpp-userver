@@ -6,7 +6,7 @@ include(DownloadUserver)
 
 find_package(
     userver
-    COMPONENTS core #
+    COMPONENTS core postgresql
     QUIET
 )
 if(NOT userver_FOUND)
@@ -23,13 +23,37 @@ add_library(
     ${PROJECT_NAME}_objs OBJECT
     src/Domain/Product/Batch.cpp
     src/Domain/Product/Product.cpp
-    src/ServiceLayer/MessageBus/MessageBus.cpp
-    src/Adapters/MessageBus/MessageBusComponent.cpp
+    src/Domain/Ports/IMessage.hpp
+    src/Domain/Ports/IRepository.hpp
+    src/Adapters/Repository/TrackingRepository.hpp
+    src/Adapters/Repository/TrackingRepository.cpp
+    src/Adapters/Repository/SqlRepository.hpp
+    src/Adapters/Repository/SqlRepository.cpp
+    src/Adapters/Repository/DTO.hpp
+    #src/ServiceLayer/MessageBus/MessageBus.cpp
+    #src/Adapters/MessageBus/MessageBusComponent.cpp
 )
+
+userver_add_sql_library(
+    ${PROJECT_NAME}_sql
+    NAMESPACE
+    Allocation
+    SOURCE_DIR
+    ${CMAKE_SOURCE_DIR}/postgresql/queries
+    OUTPUT_DIR
+    ${CMAKE_CURRENT_BINARY_DIR}
+    SQL_FILES
+    *.sql
+)
+
 target_link_libraries(
     ${PROJECT_NAME}_objs
-    PUBLIC userver::core #
+    PUBLIC
+    ${PROJECT_NAME}_sql
+    userver::core #
 )
+target_precompile_headers(${PROJECT_NAME}_objs PUBLIC ${CMAKE_SOURCE_DIR}/src/Precompile.hpp)
+
 
 # The Service
 add_executable(${PROJECT_NAME} src/main.cpp)
@@ -40,8 +64,8 @@ add_executable(
     ${PROJECT_NAME}_unittest
     src/Tests/Unit/Batches.cpp
     src/Tests/Unit/Products.cpp
-    src/Tests/Unit/Handlers.cpp
-    src/Tests/Utilities/Common.cpp
+    #src/Tests/Unit/Handlers.cpp
+    #src/Tests/Utilities/Common.cpp
 )
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)

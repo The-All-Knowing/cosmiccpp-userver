@@ -7,7 +7,7 @@
 #include <userver/server/handlers/ping.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
-#include "ServiceLayer/MessageBus/MessageBus.hpp"
+//#include "ServiceLayer/MessageBus/MessageBus.hpp"
 #include <userver/utils/daemon_run.hpp>
 
 
@@ -19,8 +19,8 @@ int main(int argc, char* argv[]) {
             .AppendComponentList(userver::clients::http::ComponentList())
             .Append<userver::clients::dns::Component>()
             .Append<userver::server::handlers::TestsControl>()
-            .Append<userver::congestion_control::Component>()
-            .Append<Allocation::ServiceLayer::MessageBus>()
+            .Append<userver::congestion_control::Component>();
+            //.Append<Allocation::ServiceLayer::MessageBus>()
         ;
 
     return userver::utils::DaemonMain(argc, argv, component_list);

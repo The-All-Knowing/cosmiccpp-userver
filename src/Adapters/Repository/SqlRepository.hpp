@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Precompile.hpp"
+
 #include <userver/storages/postgres/transaction.hpp>
 
 #include "DTO.hpp"
