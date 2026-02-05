@@ -1,6 +1,6 @@
 #pragma once
 
-#include <userver/storages/postgres/transaction.hpp>
+#include <userver/storages/postgres/cluster.hpp>
 
 #include "AbstractUnitOfWork.hpp"
 #include "Adapters/Repository/SqlRepository.hpp"
@@ -12,9 +12,7 @@ namespace Allocation::ServiceLayer::UoW
     class SqlUnitOfWork final : public AbstractUnitOfWork
     {
     public:
-        /// @brief Конструктор.
-        /// @details При создании объекта открывает сессию к БД и начинает транзакцию.
-        SqlUnitOfWork();
+        SqlUnitOfWork(userver::storages::postgres::ClusterPtr pgCluster);
 
         void Commit() override;
 
@@ -23,6 +21,7 @@ namespace Allocation::ServiceLayer::UoW
         void RollBack() override;
 
     private:
+        userver::storages::postgres::ClusterPtr _pgCluster;
         userver::storages::postgres::Transaction _transaction;
         Adapters::Repository::SqlRepository _repository;
     };

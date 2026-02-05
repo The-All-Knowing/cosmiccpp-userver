@@ -32,7 +32,8 @@ namespace Allocation::ServiceLayer::UoW
         [[nodiscard]] std::vector<Domain::IMessagePtr> GetNewMessages() noexcept override;
 
     protected:
-        [[nodiscard]] std::unordered_set<Domain::ProductPtr> GetUpdatedProducts() const noexcept;
+        [[nodiscard]] std::vector<Domain::ProductPtr> GetUpdatedProducts() const noexcept;
+
     private:
         Adapters::Repository::TrackingRepository _trackingRepository;
         bool _isCommitted{false};

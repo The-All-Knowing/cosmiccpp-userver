@@ -8,29 +8,45 @@ namespace Allocation::Adapters::Repository
     void TrackingRepository::Add(Domain::ProductPtr product)
     {
         _repo.Add(product);
-        _seenProducts.insert(product);
+        _updatedProducts.try_emplace(product->GetSKU(), product);
+        _seenProducts.try_emplace(product->GetSKU(), product);
     }
 
     void TrackingRepository::Update(Domain::ProductPtr product)
     {
         _repo.Update(product);
-        _seenProducts.insert(product);
+        _updatedProducts.try_emplace(product->GetSKU(), product);
     }
 
-    Domain::ProductPtr TrackingRepository::Get(std::string_view sku)
+    Domain::ProductPtr TrackingRepository::Get(const std::string& sku)
     {
-        return _repo.Get(sku);
+        if (!_seenProducts.contains(sku))
+            _seenProducts.emplace(sku, _repo.Get(sku));
+        return _seenProducts[sku];
     }
 
-    Domain::ProductPtr TrackingRepository::GetByBatchRef(std::string_view batchRef)
+    Domain::ProductPtr TrackingRepository::GetByBatchRef(const std::string& batchRef)
     {
-        return _repo.GetByBatchRef(batchRef);
+        for (auto& [_, product] : _seenProducts)
+            if (product->GetBatch(batchRef).has_value())
+                return product;
+        auto product = _repo.GetByBatchRef(batchRef);
+        _seenProducts.emplace(product->GetSKU(), product);
+        return product;
     }
 
-    std::unordered_set<Domain::ProductPtr> TrackingRepository::GetSeen() const noexcept
+    std::vector<Domain::ProductPtr> TrackingRepository::GetUpdated() const noexcept
     {
-        return _seenProducts;
+        std::vector<Domain::ProductPtr> updatedProducts;
+        updatedProducts.reserve(_updatedProducts.size());
+        for (const auto& [_, product] : _updatedProducts)
+            updatedProducts.push_back(product);
+        return updatedProducts;
     }
 
-    void TrackingRepository::Clear() noexcept { _seenProducts.clear(); }
+    void TrackingRepository::Clear() noexcept
+    {
+        _updatedProducts.clear();
+        _seenProducts.clear();
+    }
 }

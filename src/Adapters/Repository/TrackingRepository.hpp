@@ -18,17 +18,18 @@ namespace Allocation::Adapters::Repository
 
         void Update(Domain::ProductPtr product) override;
 
-        [[nodiscard]] Domain::ProductPtr Get(std::string_view sku) override;
+        [[nodiscard]] Domain::ProductPtr Get(const std::string& sku) override;
 
-        [[nodiscard]] Domain::ProductPtr GetByBatchRef(std::string_view batchRef) override;
+        [[nodiscard]] Domain::ProductPtr GetByBatchRef(const std::string& batchRef) override;
 
-        [[nodiscard]] std::unordered_set<Domain::ProductPtr> GetSeen() const noexcept;
+        [[nodiscard]] std::vector<Domain::ProductPtr> GetUpdated() const noexcept;
 
         /// @brief Очищает все наблюдаемые продукты.
         void Clear() noexcept;
 
     private:
         Domain::IRepository& _repo;
-        std::unordered_set<Domain::ProductPtr> _seenProducts;
+        std::unordered_map<std::string, Domain::ProductPtr> _updatedProducts;
+        std::unordered_map<std::string, Domain::ProductPtr> _seenProducts;
     };
 }

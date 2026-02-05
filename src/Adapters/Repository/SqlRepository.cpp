@@ -2,9 +2,6 @@
 
 #include <Allocation/sql_queries.hpp>
 
-#include "DTO.hpp"
-
-
 
 namespace Allocation::Adapters::Repository
 {
@@ -15,75 +12,102 @@ namespace Allocation::Adapters::Repository
 
     void SqlRepository::Add(Domain::ProductPtr product)
     {
-
-    }
-
-    void SqlRepository::Update(Domain::ProductPtr product) {}
-
-    Domain::ProductPtr SqlRepository::Get(std::string_view sku)
-    {
-        if (auto it = _skuToProductAndInitVersion.find(std::string(sku));
-            it != _skuToProductAndInitVersion.end())
-            return it->second.first;
-
-        auto result = _transaction.Execute(sql::kGetProductBySku, sku);
-        auto productRow = result.AsSingleRow<DTO::ProductRow>();
-        result = _transaction.Execute(sql::kGetBatchesBySku, sku);
-        auto batchRows = result.AsVector<DTO::BatchRow>();
-
-        return _skuToProductAndInitVersion
-            .emplace(sku, std::make_pair(MakeProduct(productRow, MakeBatches(batchRows)),
-                              productRow.version_number))
-            .first->second.first;
-    }
-
-    Domain::ProductPtr SqlRepository::GetByBatchRef(std::string_view batchRef)
-    {
-        for (const auto& [_, productAndVersion] : _skuToProductAndInitVersion)
-            if (productAndVersion.first->GetBatch(std::string(batchRef)))
-                return productAndVersion.first;
-
-        auto result = _transaction.Execute(Allocation::sql_queries::GetProductByBatchRef, batchRef);
-        auto productRow = result.AsSingleRow<DTO::ProductRow>();
-        result = _transaction.Execute(Allocation::sql_queries::GetBatchesByBatchRef, batchRef);
-        auto batchRows = result.AsVector<DTO::BatchRow>();
-
-        return _skuToProductAndInitVersion
-            .emplace(productRow.sku, std::make_pair(MakeProduct(productRow, MakeBatches(batchRows)),
-                                         productRow.version_number))
-            .first->second.first;
-    }
-
-    std::vector<Domain::OrderLine> SqlRepository::MakeOrderLines(
-        const std::vector<DTO::OrderLineRow>& orderLineRows) const
-    {
-        std::vector<Domain::OrderLine> orderLines;
-        orderLines.reserve(orderLineRows.size());
-        for (const auto& row : orderLineRows)
-            orderLines.emplace_back(row.sku, row.qty, row.orderid);
-        return orderLines;
-    }
-
-    std::vector<Domain::Batch> SqlRepository::MakeBatches(
-        const std::vector<DTO::BatchRow>& batchRows) const
-    {
-        std::vector<Domain::Batch> batches;
-        batches.reserve(batchRows.size());
-        for (const auto& batchRow : batchRows)
+        _transaction.Execute(sql::kInsertproduct, product->GetSKU(), product->GetVersion());
+        for (const auto& batch : product->GetBatches())
         {
-            auto orderLineRows =
-                _transaction.Execute(Allocation::sql_queries::GetOrderLinesByBatchId, batchRow.id);
-            auto orderLines = MakeOrderLines(orderLineRows);
-            batches.emplace_back(batchRow.reference, batchRow.sku, batchRow.purchased_quantity,
-                batchRow.eta, orderLines);
+            auto result = _transaction.Execute(sql::kInsertbatch, batch.GetReference(),
+                product->GetSKU(), batch.GetPurchasedQuantity(), batch.GetETA());
+            int batchId = result.AsSingleRow<int>();
+            std::vector<std::tuple<int, std::string, int>> additionalOrderLines;
+            for (const auto& orderLine : batch.GetAllocations())
+                additionalOrderLines.emplace_back(batchId, orderLine.sku, orderLine.quantity);
+            result = _transaction.Execute(sql::kInsertorderlines, additionalOrderLines);
+            auto orderLineIds = result.AsContainer<std::vector<int>>();
+            result = _transaction.Execute(sql::kInsertallocations, batchId, orderLineIds);
         }
-        return batches;
     }
 
-    Domain::ProductPtr SqlRepository::MakeProduct(
-        const DTO::ProductRow& productRow, const std::vector<Domain::Batch>& batches) const
+    void SqlRepository::Update(Domain::ProductPtr product)
     {
+        auto batchRefs = product->GetModifiedBatches();
+        std::vector<std::string> deletedBatchRefs;
+        std::vector<std::string> addedBatchRefs;
+        for (const auto& batchRef : batchRefs)
+        {
+            deletedBatchRefs.push_back(batchRef);
+            if (product->GetBatch(batchRef).has_value())
+                addedBatchRefs.push_back(batchRef);
+        }
+        auto result = _transaction.Execute(sql::kDeletebatch, deletedBatchRefs);
+        auto deletedIds = result.AsContainer<std::vector<int>>();
+        result = _transaction.Execute(sql::kDeleteallocations, deletedIds);
+        auto orderLineIds = result.AsContainer<std::vector<int>>();
+        _transaction.Execute(sql::kDeleteorderlines, orderLineIds);
+
+        for (const auto& batchRef : addedBatchRefs)
+        {
+            const auto batch = product->GetBatch(batchRef).value();
+            auto result = _transaction.Execute(sql::kInsertbatch, batch.GetReference(),
+                product->GetSKU(), batch.GetPurchasedQuantity(), batch.GetETA());
+            int batchId = result.AsSingleRow<int>();
+            std::vector<std::tuple<int, std::string, int>> additionalOrderLines;
+            for (const auto& orderLine : batch.GetAllocations())
+                additionalOrderLines.emplace_back(batchId, orderLine.sku, orderLine.quantity);
+            result = _transaction.Execute(sql::kInsertorderlines, additionalOrderLines);
+            auto orderLineIds = result.AsContainer<std::vector<int>>();
+            result = _transaction.Execute(sql::kInsertallocations, batchId, orderLineIds);
+        }
+    }
+
+    Domain::ProductPtr SqlRepository::Get(const std::string& sku)
+    {
+        auto result = _transaction.Execute(sql::kSelectproductbysku, sku);
+        auto productDTO = result.AsSingleRow<ProductDTO>();
+        result = _transaction.Execute(sql::kSelectbatchesbysku, sku);
+        auto batchesDTO = result.AsContainer<std::vector<BatchDTO>>();
+        std::vector<int> batchIds;
+        batchIds.reserve(batchesDTO.size());
+        for (const auto& batch : batchesDTO)
+            batchIds.push_back(batch.id);
+        result = _transaction.Execute(sql::kSelectorderlinesbybatchpk, batchIds);
+        auto orderLinesDTO = result.AsContainer<std::vector<OrderLineDTO>>();
+        return MakeProduct(productDTO, batchesDTO, orderLinesDTO);
+    }
+
+    Domain::ProductPtr SqlRepository::GetByBatchRef(const std::string& batchRef)
+    {
+        auto result = _transaction.Execute(sql::kSelectproductbybatchref, batchRef);
+        auto productDTO = result.AsSingleRow<ProductDTO>();
+        result = _transaction.Execute(sql::kSelectbatchesbysku, productDTO.sku);
+        auto batchesDTO = result.AsContainer<std::vector<BatchDTO>>();
+        std::vector<int> batchIds;
+        batchIds.reserve(batchesDTO.size());
+        for (const auto& batch : batchesDTO)
+            batchIds.push_back(batch.id);
+        result = _transaction.Execute(sql::kSelectorderlinesbybatchpk, batchIds);
+        auto orderLinesDTO = result.AsContainer<std::vector<OrderLineDTO>>();
+        return MakeProduct(productDTO, batchesDTO, orderLinesDTO);
+    }
+
+    void SqlRepository::IncrementVersion(Domain::ProductPtr product)
+    {
+        _transaction.Execute(sql::kUpdateproductversion, product->GetSKU(), product->GetVersion());
+    }
+
+    Domain::ProductPtr SqlRepository::MakeProduct(const ProductDTO& product,
+        const std::vector<BatchDTO>& batches, const std::vector<OrderLineDTO>& orderLines) const
+    {
+        std::unordered_map<int, std::vector<Domain::OrderLine>> batchIdByOrderLines;
+        for (const auto& orderLine : orderLines)
+            batchIdByOrderLines[orderLine.batchId].emplace_back(
+                orderLine.sku, orderLine.qty, orderLine.orderid);
+
+        std::vector<Domain::Batch> domainBatches;
+        for (const auto& batch : batches)
+            domainBatches.emplace_back(batch.reference, batch.sku, batch.purchased_quantity,
+                batch.eta, batchIdByOrderLines[batch.id]);
+
         return std::make_shared<Domain::Product>(
-            productRow.sku, batches, productRow.version_number);
+            product.sku, domainBatches, product.version_number);
     }
 }

@@ -8,9 +8,17 @@ namespace Allocation::ServiceLayer::UoW
     {
     }
 
-    void AbstractUnitOfWork::Commit() { _isCommitted = true; }
+    void AbstractUnitOfWork::Commit()
+    {
+        _isCommitted = true;
+        _trackingRepository.Clear();
+    }
 
-    void AbstractUnitOfWork::RollBack() { _isCommitted = false; }
+    void AbstractUnitOfWork::RollBack()
+    {
+        _isCommitted = false;
+        _trackingRepository.Clear();
+    }
 
     bool AbstractUnitOfWork::IsCommitted() const noexcept { return _isCommitted; }
 
@@ -19,7 +27,7 @@ namespace Allocation::ServiceLayer::UoW
     std::vector<Domain::IMessagePtr> AbstractUnitOfWork::GetNewMessages() noexcept
     {
         std::vector<Domain::IMessagePtr> newMessages;
-        for (const auto& [_, product] : _trackingRepository.GetSeen())
+        for (auto& product : _trackingRepository.GetUpdated())
         {
             auto messages = product->Messages();
             newMessages.insert(newMessages.end(), messages.begin(), messages.end());
@@ -28,11 +36,8 @@ namespace Allocation::ServiceLayer::UoW
         return newMessages;
     }
 
-    std::unordered_set<Domain::ProductPtr> AbstractUnitOfWork::GetUpdatedProducts() const noexcept
+    std::vector<Domain::ProductPtr> AbstractUnitOfWork::GetUpdatedProducts() const noexcept
     {
-        std::unordered_set<Domain::ProductPtr> result;
-        for (const auto& [_, product] : _trackingRepository.GetSeen())
-            result.insert(product);
-        return result;
+        return _trackingRepository.GetUpdated();
     }
 }

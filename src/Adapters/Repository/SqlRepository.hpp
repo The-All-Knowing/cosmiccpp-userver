@@ -3,8 +3,8 @@
 #include "Precompile.hpp"
 
 #include <userver/storages/postgres/transaction.hpp>
+#include <userver/utils/datetime/date.hpp>
 
-#include "DTO.hpp"
 #include "Domain/Ports/IRepository.hpp"
 
 
@@ -14,6 +14,29 @@ namespace Allocation::Adapters::Repository
     /// @brief Реализация репозитория для работы с PostgreSQL СУБД.
     class SqlRepository final : public Domain::IRepository
     {
+        struct OrderLineDTO final
+        {
+            int batchId;
+            std::string sku;
+            int qty;
+            std::string orderid;
+        };
+
+        struct BatchDTO final
+        {
+            int id;
+            std::string reference;
+            std::string sku;
+            int purchased_quantity;
+            std::optional<userver::utils::datetime::Date> eta;
+        };
+
+        struct ProductDTO final
+        {
+            std::string sku;
+            size_t version_number;
+        };
+
     public:
         explicit SqlRepository(userver::storages::postgres::Transaction& transaction);
 
@@ -21,21 +44,17 @@ namespace Allocation::Adapters::Repository
 
         void Update(Domain::ProductPtr product) override;
 
-        [[nodiscard]] Domain::ProductPtr Get(std::string_view sku) override;
+        [[nodiscard]] Domain::ProductPtr Get(const std::string& sku) override;
 
-        [[nodiscard]] Domain::ProductPtr GetByBatchRef(std::string_view batchRef) override;
+        [[nodiscard]] Domain::ProductPtr GetByBatchRef(const std::string& batchRef) override;
 
         void IncrementVersion(Domain::ProductPtr product);
 
     private:
-        std::vector<Domain::OrderLine> MakeOrderLines(const std::vector<DTO::OrderLineRow>& orderLineRows) const;
+        Domain::ProductPtr MakeProduct(const ProductDTO& product,
+            const std::vector<BatchDTO>& batches,
+            const std::vector<OrderLineDTO>& orderLines) const;
 
-        std::vector<Domain::Batch> MakeBatches(const std::vector<DTO::BatchRow>& batchRows) const;
-
-        Domain::ProductPtr MakeProduct(
-            const DTO::ProductRow& productRow, const std::vector<Domain::Batch>& batches) const;
-
-        std::unordered_map<std::string, std::pair<Domain::ProductPtr, size_t>> _skuToProductAndInitVersion;
         userver::storages::postgres::Transaction& _transaction;
     };
 }
