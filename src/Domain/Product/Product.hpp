@@ -66,7 +66,7 @@ namespace Allocation::Domain
 
         /// @brief Возвращает номер версии агрегата.
         /// @return Номер версии.
-        [[nodiscard]] size_t GetVersion() const noexcept;
+        [[nodiscard]] int64_t GetVersion() const noexcept;
 
         /// @brief Возвращает артикул продукции агрегата.
         /// @return Артикул продукции.
@@ -82,7 +82,6 @@ namespace Allocation::Domain
     private:
         std::string _sku;
         std::unordered_map<std::string, Batch> _referenceByBatches;
-        std::unordered_set<std::string> _modifiedBatchRefs;
         std::vector<Domain::IMessagePtr> _messages;
         size_t _versionNumber;
     };

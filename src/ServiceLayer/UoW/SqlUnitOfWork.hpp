@@ -24,5 +24,5 @@ namespace Allocation::ServiceLayer::UoW
         userver::storages::postgres::ClusterPtr _pgCluster;
         userver::storages::postgres::Transaction _transaction;
         Adapters::Repository::SqlRepository _repository;
-    };
+    };        
 }

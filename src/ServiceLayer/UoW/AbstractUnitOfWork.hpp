@@ -1,18 +1,18 @@
 #pragma once
 
-#include "IUnitOfWork.hpp"
 #include "Adapters/Repository/TrackingRepository.hpp"
+#include "IUnitOfWork.hpp"
+
 
 
 namespace Allocation::ServiceLayer::UoW
 {
     /// @brief Абстрактный базовый класс для реализации паттерна "Единица работы".
-    /// @note Отвечает за контроль транзакций и отслеживание изменений в агрегатах через TrackingRepository.
+    /// @note Отвечает за контроль транзакций и отслеживание изменений в агрегатах через
+    /// TrackingRepository.
     class AbstractUnitOfWork : public IUnitOfWork
     {
     public:
-        AbstractUnitOfWork(Domain::IRepository& repository);
-
         /// @brief Подтверждает изменения.
         void Commit() override;
 
@@ -32,10 +32,12 @@ namespace Allocation::ServiceLayer::UoW
         [[nodiscard]] std::vector<Domain::IMessagePtr> GetNewMessages() noexcept override;
 
     protected:
-        [[nodiscard]] std::vector<Domain::ProductPtr> GetUpdatedProducts() const noexcept;
+        [[nodiscard]] std::vector<Domain::ProductPtr> getUpdatedProducts() const noexcept;
+
+        void setRepository(Domain::IRepository& repository) noexcept;
 
     private:
-        Adapters::Repository::TrackingRepository _trackingRepository;
+        std::unique_ptr<Adapters::Repository::TrackingRepository> _trackingRepository;
         bool _isCommitted{false};
     };
 }

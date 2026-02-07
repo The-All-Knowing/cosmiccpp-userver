@@ -1,33 +1,36 @@
 #include "AbstractUnitOfWork.hpp"
+#include <cassert>
 
 
 namespace Allocation::ServiceLayer::UoW
 {
-    AbstractUnitOfWork::AbstractUnitOfWork(Domain::IRepository& repository)
-        : _trackingRepository(repository)
-    {
-    }
-
     void AbstractUnitOfWork::Commit()
     {
         _isCommitted = true;
-        _trackingRepository.Clear();
+        if (_trackingRepository)
+            _trackingRepository->Clear();
     }
 
     void AbstractUnitOfWork::RollBack()
     {
         _isCommitted = false;
-        _trackingRepository.Clear();
+        if (_trackingRepository)
+            _trackingRepository->Clear();
     }
 
     bool AbstractUnitOfWork::IsCommitted() const noexcept { return _isCommitted; }
 
-    Domain::IRepository& AbstractUnitOfWork::GetProductRepository() { return _trackingRepository; }
+    Domain::IRepository& AbstractUnitOfWork::GetProductRepository() 
+    {
+        if (_trackingRepository)
+            return *_trackingRepository;
+        throw std::runtime_error("Repository is not set");
+    }
 
     std::vector<Domain::IMessagePtr> AbstractUnitOfWork::GetNewMessages() noexcept
     {
         std::vector<Domain::IMessagePtr> newMessages;
-        for (auto& product : _trackingRepository.GetUpdated())
+        for (auto& product : getUpdatedProducts())
         {
             auto messages = product->Messages();
             newMessages.insert(newMessages.end(), messages.begin(), messages.end());
@@ -36,8 +39,15 @@ namespace Allocation::ServiceLayer::UoW
         return newMessages;
     }
 
-    std::vector<Domain::ProductPtr> AbstractUnitOfWork::GetUpdatedProducts() const noexcept
+    std::vector<Domain::ProductPtr> AbstractUnitOfWork::getUpdatedProducts() const noexcept
     {
-        return _trackingRepository.GetUpdated();
+        if (_trackingRepository)
+            return _trackingRepository->GetUpdated();
+        return {};
+    }
+
+    void AbstractUnitOfWork::setRepository(Domain::IRepository& repository) noexcept
+    {
+        _trackingRepository = std::make_unique<Adapters::Repository::TrackingRepository>(repository);
     }
 }

@@ -26,7 +26,6 @@ namespace Allocation::Domain
             return false;
         auto batchRef = batch.GetReference();
         _referenceByBatches.insert({batchRef, batch});
-        _modifiedBatchRefs.insert(batchRef);
         return true;
     }
 
@@ -44,7 +43,6 @@ namespace Allocation::Domain
         {
             auto batchRef = batch.GetReference();
             _referenceByBatches.insert({batchRef, batch});
-            _modifiedBatchRefs.insert(batchRef);
         }
         return true;
     }
@@ -72,7 +70,6 @@ namespace Allocation::Domain
             auto batchRef = batch->GetReference();
             batch->Allocate(line);
             _versionNumber++;
-            _modifiedBatchRefs.insert(batchRef);
             _messages.push_back(
                 Make<Events::Allocated>(line.reference, line.sku, line.quantity, batchRef));
             return batchRef;
@@ -89,7 +86,6 @@ namespace Allocation::Domain
             return false;
         auto& batch = it->second;
         batch.SetPurchasedQuantity(newQty);
-        _modifiedBatchRefs.insert(batch.GetReference());
 
         while (batch.GetAvailableQuantity() < 0)
         {
@@ -117,12 +113,7 @@ namespace Allocation::Domain
         return std::nullopt;
     }
 
-    std::vector<std::string> Product::GetModifiedBatches() const noexcept
-    {
-        return std::vector<std::string>(_modifiedBatchRefs.begin(), _modifiedBatchRefs.end());
-    }
-
-    size_t Product::GetVersion() const noexcept { return _versionNumber; }
+    int64_t Product::GetVersion() const noexcept { return _versionNumber; }
 
     std::string Product::GetSKU() const noexcept { return _sku; }
 

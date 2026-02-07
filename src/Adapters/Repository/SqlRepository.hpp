@@ -8,7 +8,6 @@
 #include "Domain/Ports/IRepository.hpp"
 
 
-
 namespace Allocation::Adapters::Repository
 {
     /// @brief Реализация репозитория для работы с PostgreSQL СУБД.
@@ -34,7 +33,7 @@ namespace Allocation::Adapters::Repository
         struct ProductDTO final
         {
             std::string sku;
-            size_t version_number;
+            int64_t version_number;
         };
 
     public:
@@ -51,7 +50,12 @@ namespace Allocation::Adapters::Repository
         void IncrementVersion(Domain::ProductPtr product);
 
     private:
-        Domain::ProductPtr MakeProduct(const ProductDTO& product,
+        void getBatchesAndOrderLines(const std::string& sku, std::vector<BatchDTO>& batches,
+            std::vector<OrderLineDTO>& orderLines) const;
+
+        void insertBatches(const std::vector<Domain::Batch>& batches);
+
+        Domain::ProductPtr makeProduct(const ProductDTO& product,
             const std::vector<BatchDTO>& batches,
             const std::vector<OrderLineDTO>& orderLines) const;
 

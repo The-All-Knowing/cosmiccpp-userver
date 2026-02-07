@@ -16,7 +16,7 @@ namespace Allocation
     /// @param ymd Дата в формате std::chrono.
     /// @param days Количество дней для добавления.
     /// @return Новая корректная дата с добавленными днями.
-    [[nodiscard]] std::chrono::year_month_day operator+(
+    [[nodiscard]] inline std::chrono::year_month_day operator+(
         const std::chrono::year_month_day& ymd, const std::chrono::days& days) noexcept
     {
         return std::chrono::year_month_day{std::chrono::sys_days{ymd} + days};
@@ -26,7 +26,7 @@ namespace Allocation
     /// @param days Количество дней для добавления.
     /// @param ymd Дата в формате std::chrono.
     /// @return Новая корректная дата с добавленными днями.
-    [[nodiscard]] std::chrono::year_month_day operator+(
+    [[nodiscard]] inline std::chrono::year_month_day operator+(
         const std::chrono::days& days, const std::chrono::year_month_day& ymd) noexcept
     {
         return ymd + days;

@@ -29,7 +29,11 @@ add_library(
     src/Adapters/Repository/TrackingRepository.cpp
     src/Adapters/Repository/SqlRepository.hpp
     src/Adapters/Repository/SqlRepository.cpp
-    src/Adapters/Repository/DTO.hpp
+    src/ServiceLayer/UoW/AbstractUnitOfWork.cpp
+    src/ServiceLayer/UoW/AbstractUnitOfWork.hpp
+    src/ServiceLayer/UoW/IUnitOfWork.hpp
+    src/ServiceLayer/UoW/SqlUnitOfWork.cpp
+    src/ServiceLayer/UoW/SqlUnitOfWork.hpp
     #src/ServiceLayer/MessageBus/MessageBus.cpp
     #src/Adapters/MessageBus/MessageBusComponent.cpp
 )

@@ -9,14 +9,14 @@ namespace Allocation::ServiceLayer::UoW
     SqlUnitOfWork::SqlUnitOfWork(userver::storages::postgres::ClusterPtr pgCluster)
         : _pgCluster(std::move(pgCluster)),
           _transaction(_pgCluster->Begin(userver::storages::postgres::Transaction::RW)),
-          _repository(_transaction),
-          AbstractUnitOfWork(_repository)
+          _repository(_transaction)
     {
+        setRepository(_repository);
     }
 
     void SqlUnitOfWork::Commit()
     {
-        for (const auto& product : GetUpdatedProducts())
+        for (const auto& product : getUpdatedProducts())
             _repository.IncrementVersion(product);
         _transaction.Commit();
         AbstractUnitOfWork::Commit();
