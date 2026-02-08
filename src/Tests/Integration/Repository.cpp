@@ -1,14 +1,14 @@
-#include <gtest/gtest.h>
+#include <userver/utest/utest.hpp>
 
 #include "Adapters/Repository/SqlRepository.hpp"
-#include "Tests/Utilities/DatabaseFixture_test.hpp"
+#include "PgFixture.hpp"
 
 
 namespace Allocation::Tests
 {
-    TEST_F(Database_Fixture, test_get_by_batchref)
+    UTEST_F(PgFixture, test_get_by_batchref)
     {
-        Adapters::Repository::SqlRepository repo(_session);
+        Adapters::Repository::SqlRepository repo(transaction);
         Domain::Batch b1("b1", "sku1", 100);
         Domain::Batch b2("b2", "sku1", 100);
         Domain::Batch b3("b3", "sku2", 100);

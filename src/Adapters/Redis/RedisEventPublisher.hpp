@@ -1,28 +1,29 @@
+/*
 #pragma once
 
+#include <userver/storages/redis/client.hpp>
+#include <userver/storages/redis/component.hpp>
+
 #include "Domain/Events/AbstractEvent.hpp"
-#include "RedisConnectionPool.hpp"
-#include "Utilities/Loggers/ILogger.hpp"
 
 
 namespace Allocation::Adapters::Redis
 {
     /// @brief Публикует события в Redis.
     /// @tparam T Тип события.
-    template <typename T>
-        requires std::derived_from<T, Domain::Events::AbstractEvent>
     class RedisEventPublisher
     {
     public:
         /// @brief Конструктор.
-        RedisEventPublisher() : _connection(RedisConnectionPool::Instance().GetConnection()) {}
+        RedisEventPublisher(const userver::components::Redis& component, const std::string& channel,
+            const userver::storages::redis::CommandControl& commandControl);
 
-        /// @brief Публикует событие в указанный канал.
-        /// @param channel Канал для публикации.
-        /// @param event Событие для публикации.
-        void operator()(const std::string& channel, std::shared_ptr<T> event) const
+        template <typename T>
+            requires std::derived_from<T, Domain::Events::AbstractEvent>
+        void operator()(std::shared_ptr<T> event) const
         {
-            Poco::JSON::Object json;
+            _client->Publish(std::string channel, std::string message, const CommandControl &command_control, PubShard policy)
+            /*
             for (const auto& [name, value] : GetAttributes<T>(event))
                 json.set(name, value);
 
@@ -44,9 +45,12 @@ namespace Allocation::Adapters::Redis
             {
                 Allocation::Loggers::GetLogger()->Error("Redis publish failed: unknown error");
             }
+
         }
 
     private:
-        mutable Poco::Redis::PooledConnection _connection;
+        userver::storages::redis::ClientPtr _client;
+        userver::storages::redis::CommandControl _commandControl;
     };
 }
+*/

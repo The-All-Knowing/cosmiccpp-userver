@@ -6,7 +6,7 @@ include(DownloadUserver)
 
 find_package(
     userver
-    COMPONENTS core postgresql
+    COMPONENTS core postgresql redis
     QUIET
 )
 if(NOT userver_FOUND)
@@ -34,8 +34,10 @@ add_library(
     src/ServiceLayer/UoW/IUnitOfWork.hpp
     src/ServiceLayer/UoW/SqlUnitOfWork.cpp
     src/ServiceLayer/UoW/SqlUnitOfWork.hpp
-    #src/ServiceLayer/MessageBus/MessageBus.cpp
-    #src/Adapters/MessageBus/MessageBusComponent.cpp
+    src/ServiceLayer/MessageBus/Handlers/Handlers.cpp
+    src/ServiceLayer/MessageBus/Handlers/Handlers.hpp
+    src/ServiceLayer/MessageBus/MessageBus.cpp
+    src/Adapters/MessageBus/MessageBusComponent.cpp
 )
 
 userver_add_sql_library(
@@ -54,7 +56,7 @@ target_link_libraries(
     ${PROJECT_NAME}_objs
     PUBLIC
     ${PROJECT_NAME}_sql
-    userver::core #
+    userver::core
 )
 target_precompile_headers(${PROJECT_NAME}_objs PUBLIC ${CMAKE_SOURCE_DIR}/src/Precompile.hpp)
 
@@ -68,11 +70,24 @@ add_executable(
     ${PROJECT_NAME}_unittest
     src/Tests/Unit/Batches.cpp
     src/Tests/Unit/Products.cpp
-    #src/Tests/Unit/Handlers.cpp
+    src/Tests/Unit/Handlers.cpp
     #src/Tests/Utilities/Common.cpp
 )
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
+
+# Integrations Tests
+#add_executable(
+#    ${PROJECT_NAME}_integrationtest
+#    src/Tests/Integration/PgFixture.hpp
+#    src/Tests/Integration/Repository.cpp
+    #src/Tests/Integration/UnitOfWork_test.cpp
+    #src/Tests/Unit/Handlers.cpp
+    #src/Tests/Utilities/Common.cpp
+#)
+#target_link_libraries(${PROJECT_NAME}_integrationtest PRIVATE ${PROJECT_NAME}_objs userver::utest)
+#add_google_tests(${PROJECT_NAME}_integrationtest)
+
 
 # Benchmarks
 # add_executable(${PROJECT_NAME}_benchmark src/greeting_benchmark.cpp)

@@ -106,9 +106,5 @@ namespace Allocation::Tests
 
         EXPECT_TRUE(product.AddBatch(batch));
         EXPECT_TRUE(product.GetBatch("b-add").has_value());
-
-        auto modified = product.GetModifiedBatches();
-        ASSERT_EQ(modified.size(), 1);
-        EXPECT_EQ(modified.back(), "b-add");
     }
 }

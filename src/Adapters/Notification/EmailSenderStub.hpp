@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Utilities/Loggers/ILogger.hpp"
-
 
 namespace Allocation::Adapters::Notification
 {
@@ -14,8 +12,7 @@ namespace Allocation::Adapters::Notification
         /// @param message Текст сообщения.
         void operator()(const std::string& to, const std::string& message) const
         {
-            Allocation::Loggers::GetLogger()->Debug(
-                std::format("Sending email to {}: {}", to, message));
+            //LOG_DEBUG("EmailSenderStub: Sending email to {}: {}", to, message);
         }
     };
 }

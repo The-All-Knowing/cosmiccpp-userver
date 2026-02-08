@@ -1,13 +1,14 @@
 #include "Handlers.hpp"
 
+#include "Common.hpp"
 #include "Domain/Product/Product.hpp"
 #include "ServiceLayer/Exceptions.hpp"
-#include "Utilities/Common.hpp"
+#include <Allocation/sql_queries.hpp>
 
 
 namespace Allocation::ServiceLayer::Handlers
 {
-    void AddBatch(Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::CreateBatch> message)
+    void AddBatch(UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::CreateBatch> message)
     {
         auto& repo = uow.GetProductRepository();
         auto product = repo.Get(message->sku);
@@ -21,7 +22,7 @@ namespace Allocation::ServiceLayer::Handlers
         uow.Commit();
     }
 
-    void Allocate(Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::Allocate> command)
+    void Allocate(UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::Allocate> command)
     {
         Domain::OrderLine line(command->orderid, command->sku, command->qty);
         auto& repo = uow.GetProductRepository();
@@ -33,13 +34,13 @@ namespace Allocation::ServiceLayer::Handlers
         uow.Commit();
     }
 
-    void Reallocate(Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Events::Deallocated> event)
+    void Reallocate(UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Events::Deallocated> event)
     {
         Allocate(uow, Make<Domain::Commands::Allocate>(event->orderid, event->sku, event->qty));
     }
 
     void ChangeBatchQuantity(
-        Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::ChangeBatchQuantity> command)
+        UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::ChangeBatchQuantity> command)
     {
         auto product = uow.GetProductRepository().GetByBatchRef(command->ref);
         if (!product)
@@ -48,28 +49,19 @@ namespace Allocation::ServiceLayer::Handlers
         uow.Commit();
     }
 
-    void AddAllocationToReadModel(
-        Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Events::Allocated> event)
+    void AddAllocationToReadModel(userver::storages::postgres::ClusterPtr cluster,
+        std::shared_ptr<Domain::Events::Allocated> event)
     {
-        auto session = uow.GetSession();
-        session << R"(
-            INSERT INTO allocation.allocations_view (orderid, sku, batchref)
-            VALUES ($1, $2, $3)
-        )",
-            Poco::Data::Keywords::use(event->orderid), Poco::Data::Keywords::use(event->sku),
-            Poco::Data::Keywords::use(event->batchref), Poco::Data::Keywords::now;
-        uow.Commit();
+        cluster->Execute(userver::storages::postgres::ClusterHostType::kMaster,
+            Allocation::sql::kInsertallocationsview,
+            event->orderid, event->sku, event->batchref);
     }
 
-    void RemoveAllocationFromReadModel(
-        Domain::IUnitOfWork& uow, std::shared_ptr<Domain::Events::Deallocated> event)
+    void RemoveAllocationFromReadModel(userver::storages::postgres::ClusterPtr cluster,
+        std::shared_ptr<Domain::Events::Deallocated> event)
     {
-        auto session = uow.GetSession();
-        session << R"(
-            DELETE FROM allocation.allocations_view
-            WHERE orderid = $1 AND sku = $2
-        )",
-            Poco::Data::Keywords::use(event->orderid), Poco::Data::Keywords::use(event->sku);
-        uow.Commit();
+        cluster->Execute(userver::storages::postgres::ClusterHostType::kMaster,
+            Allocation::sql::kDeleteallocationsview,
+            event->orderid, event->sku);
     }
 }

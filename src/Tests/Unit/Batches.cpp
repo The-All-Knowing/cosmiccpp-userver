@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "Domain/Product/Batch.hpp"
-#include "Tests/Utilities/Common.hpp"
+#include "Tests/Common.hpp"
 
 
 namespace Allocation::Tests

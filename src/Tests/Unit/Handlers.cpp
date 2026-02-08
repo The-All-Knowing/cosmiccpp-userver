@@ -1,20 +1,18 @@
-/*
-
 #include "ServiceLayer/MessageBus/Handlers/Handlers.hpp"
 
 #include <gtest/gtest.h>
+
 #include <userver/utest/assert_macros.hpp>
 
+#include "Common.hpp"
 #include "Domain/Commands/Allocate.hpp"
 #include "Domain/Commands/ChangeBatchQuantity.hpp"
 #include "Domain/Commands/CreateBatch.hpp"
 #include "Domain/Events/OutOfStock.hpp"
+#include "FakeUnitOfWork.hpp"
 #include "ServiceLayer/Exceptions.hpp"
 #include "ServiceLayer/MessageBus/Handlers/NotificationHandler.hpp"
 #include "ServiceLayer/MessageBus/MessageBus.hpp"
-#include "Tests/Utilities/Common_test.hpp"
-#include "Tests/Utilities/FakeUnitOfWork_test.hpp"
-#include "Utilities/Common.hpp"
 
 
 namespace Allocation::Tests
@@ -86,13 +84,9 @@ namespace Allocation::Tests
         messagebus.Handle(
             Make<Domain::Commands::CreateBatch>("batch1", "COMPLICATED-LAMP", 100), uow);
 
-        EXPECT_TRUE(ThrowsWithMessage<ServiceLayer::Exceptions::InvalidSku>(
-            [&]()
-            {
-                messagebus.Handle(
-                    Make<Domain::Commands::Allocate>("o1", "NONEXISTENTSKU", 10), uow);
-            },
-            "Invalid sku: NONEXISTENTSKU"));
+        UEXPECT_THROW_MSG(
+            messagebus.Handle(Make<Domain::Commands::Allocate>("o1", "NONEXISTENTSKU", 10), uow),
+            ServiceLayer::Exceptions::InvalidSku, "Invalid sku: NONEXISTENTSKU");
     }
 
     TEST_F(Handlers_TestAllocate, test_commits)
@@ -185,4 +179,3 @@ namespace Allocation::Tests
         EXPECT_EQ(product->GetBatch("batch2").value().GetAvailableQuantity(), 30);
     }
 }
-    */

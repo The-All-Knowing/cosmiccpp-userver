@@ -1,54 +1,37 @@
+
 #pragma once
 
-#include <gtest/gtest.h>
+#include <memory>
 
-#include "Adapters/Database/Mappers/ProductMapper.hpp"
-#include "Adapters/Database/Session/DatabaseSessionPool.hpp"
-#include "ServiceLayer/MessageBus/Handlers/Handlers.hpp"
-#include "ServiceLayer/MessageBus/MessageBus.hpp"
-#include "Utilities/ConfigReaders.hpp"
+#include <userver/utest/utest.hpp>
+
+#include <userver/storages/postgres/cluster.hpp>
+#include <userver/storages/postgres/transaction.hpp>
+#include <userver/utest/
 
 
 namespace Allocation::Tests
 {
-    /// @brief Фикстура для инициализации подключения к БД.
-    class Database_Fixture : public testing::Test
+    class PgFixture : public ::testing::Test
     {
-    public:
-        /// @brief Инициализирует пул сессий.
-        static void SetUpTestSuite()
-        {
-            if (auto& sessionPool = Adapters::Database::DatabaseSessionPool::Instance();
-                !sessionPool.IsConfigured())
-            {
-                auto config = ReadDatabaseConfigurations();
-                sessionPool.Configure(config);
-            }
-        }
-
     protected:
-        /// @brief Открывает транзакцию перед каждым тестом.
+        std::unique_ptr<userver::storages::postgres::Cluster> cluster;
+        userver::storages::postgres::Transaction transaction;
+
         void SetUp() override
         {
-            _session = Adapters::Database::DatabaseSessionPool::Instance().GetSession();
-            _session.begin();
-        }
+            userver::storages::postgres::ClusterSettings settings;
+            settings.dbname = "allocation_test";
+            settings.user = "test";
+            settings.password = "test";
+            settings.hosts = {{"localhost", 5432}};
 
-        /// @brief Откатывает транзакцию после каждого теста.
-        void TearDown() override
-        {
-            try
-            {
-                _session.rollback();
-            }
-            catch (...)
-            {
-            }
+            cluster = std::make_unique<userver::storages::postgres::Cluster>(
+                settings, userver::storages::postgres::DefaultCommandControls{});
         }
-
-        Poco::Data::Session _session{
-            Adapters::Database::DatabaseSessionPool::Instance().GetSession()};
     };
+}
+/*
 
     /// @brief Фикстура для работы с Unit of Work с поддержкой автоматической очистки продуктов.
     class UoW_Fixture : public testing::Test
@@ -178,4 +161,6 @@ namespace Allocation::Tests
             return ViewCleanup(reference);
         }
     };
+
 }
+    */

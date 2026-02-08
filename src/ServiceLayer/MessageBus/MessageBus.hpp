@@ -13,36 +13,32 @@ namespace Allocation::ServiceLayer
     template <typename F, typename T>
     concept EventHandlerFor =
         std::derived_from<T, Domain::Events::AbstractEvent> &&
-        (std::is_invocable_v<F, ServiceLayer::IUnitOfWork&, std::shared_ptr<T>> ||
+        (std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&, std::shared_ptr<T>> ||
             std::is_invocable_v<F, std::shared_ptr<T>>);
 
     /// @brief Концепция для обработчиков команд конкретного типа.
     template <typename F, typename T>
     concept CommandHandlerFor =
         std::derived_from<T, Domain::Commands::AbstractCommand> &&
-        std::is_invocable_v<F, ServiceLayer::IUnitOfWork&, std::shared_ptr<T>>;
+        std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&, std::shared_ptr<T>>;
 
 
     /// @brief Шина сообщений для обработки событий и команд.
     class MessageBus final
     {
         using EventHandler =
-            std::function<void(ServiceLayer::IUnitOfWork&, Domain::Events::EventPtr)>;
+            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::Events::EventPtr)>;
         using CommandHandler =
-            std::function<void(ServiceLayer::IUnitOfWork&, Domain::Commands::CommandPtr)>;
+            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::Commands::CommandPtr)>;
 
     public:
+        static MessageBus& Instance();
+
         /// @brief Обрабатывает входящее доменное сообщение.
         /// @param message Доменное сообщение.
         /// @param uow Единица работы для обработки сообщения.
-        void Handle(Domain::IMessagePtr message, ServiceLayer::IUnitOfWork& uow);
+        void Handle(Domain::IMessagePtr message, ServiceLayer::UoW::IUnitOfWork& uow);
 
-        /// @brief Обрабатывает входящее доменное сообщение.
-        /// @param message Доменное сообщение.
-        /// @note Автоматически создаёт единицу работы SqlUnitOfWork.
-        void Handle(Domain::IMessagePtr message);
-
-    private:
         /// @brief Подписывает обработчик на событие конкретного типа.
         /// @tparam T Тип события, производный от Domain::Events::AbstractEvent.
         /// @tparam F Тип обработчика.
@@ -54,9 +50,9 @@ namespace Allocation::ServiceLayer
             auto& handlers = _eventHandlers[typeid(T)];
             handlers.emplace_back(
                 [h = std::forward<F>(handler)](
-                    ServiceLayer::IUnitOfWork& uow, Domain::Events::EventPtr event)
+                    ServiceLayer::UoW::IUnitOfWork& uow, Domain::Events::EventPtr event)
                 {
-                    if constexpr (std::is_invocable_v<F, ServiceLayer::IUnitOfWork&,
+                    if constexpr (std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&,
                                       std::shared_ptr<T>>)
                         h(uow, std::static_pointer_cast<T>(event));
                     else if constexpr (std::is_invocable_v<F, std::shared_ptr<T>>)
@@ -73,25 +69,26 @@ namespace Allocation::ServiceLayer
         void SetCommandHandler(F&& handler) noexcept
         {
             _commandHandlers[typeid(T)] =
-                [h = std::forward<F>(handler)](ServiceLayer::IUnitOfWork& uow,
+                [h = std::forward<F>(handler)](ServiceLayer::UoW::IUnitOfWork& uow,
                     Domain::Commands::CommandPtr cmd) { h(uow, std::static_pointer_cast<T>(cmd)); };
         }
 
         /// @brief Очищает все зарегистрированные обработчики событий и команд.
         void ClearHandlers() noexcept;
 
+    private:
         /// @brief Обрабатывает входящее событие.
         /// @param uow Единица работы для обработки события.
         /// @param event Доменное событие.
         /// @param queue Очередь для новых сообщений.
-        void HandleEvent(ServiceLayer::IUnitOfWork& uow, Domain::Events::EventPtr event,
+        void handleEvent(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Events::EventPtr event,
             std::queue<Domain::IMessagePtr>& queue) noexcept;
 
         /// @brief Обрабатывает входящую команду.
         /// @param uow Единица работы для обработки команды.
         /// @param command Доменная команда.
         /// @param queue Очередь для новых сообщений.
-        void HandleCommand(ServiceLayer::IUnitOfWork& uow, Domain::Commands::CommandPtr command,
+        void handleCommand(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Commands::CommandPtr command,
             std::queue<Domain::IMessagePtr>& queue);
 
         std::unordered_map<std::type_index, std::vector<EventHandler>> _eventHandlers;
