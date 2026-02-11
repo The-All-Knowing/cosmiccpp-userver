@@ -1,53 +1,64 @@
 #include "AbstractUnitOfWork.hpp"
-#include <cassert>
 
 
 namespace Allocation::ServiceLayer::UoW
 {
     void AbstractUnitOfWork::Commit()
     {
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+        for (auto& product : getUpdatedProducts())
+        {
+            auto messages = product->Messages();
+            _newMessages.insert(_newMessages.end(), messages.begin(), messages.end());
+            product->ClearMessages();
+        }
+        commit();
         _isCommitted = true;
-        if (_trackingRepository)
-            _trackingRepository->Clear();
+        _trackingRepository->Clear();
     }
 
     void AbstractUnitOfWork::RollBack()
     {
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+        rollBack();
         _isCommitted = false;
-        if (_trackingRepository)
-            _trackingRepository->Clear();
+        _trackingRepository->Clear();
     }
 
-    bool AbstractUnitOfWork::IsCommitted() const noexcept { return _isCommitted; }
-
-    Domain::IRepository& AbstractUnitOfWork::GetProductRepository() 
+    bool AbstractUnitOfWork::IsCommitted() const
     {
-        if (_trackingRepository)
-            return *_trackingRepository;
-        throw std::runtime_error("Repository is not set");
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+        return _isCommitted;
     }
 
-    std::vector<Domain::IMessagePtr> AbstractUnitOfWork::GetNewMessages() noexcept
+    Domain::IRepository& AbstractUnitOfWork::GetProductRepository()
     {
-        std::vector<Domain::IMessagePtr> newMessages;
-        for (auto& product : getUpdatedProducts())
-        {
-            auto messages = product->Messages();
-            newMessages.insert(newMessages.end(), messages.begin(), messages.end());
-            product->ClearMessages();
-        }
-        return newMessages;
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+        return *_trackingRepository;
     }
 
-    std::vector<Domain::ProductPtr> AbstractUnitOfWork::getUpdatedProducts() const noexcept
+    std::vector<Domain::IMessagePtr> AbstractUnitOfWork::GetNewMessages()
     {
-        if (_trackingRepository)
-            return _trackingRepository->GetUpdated();
-        return {};
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+        return std::move(_newMessages);
     }
 
-    void AbstractUnitOfWork::setRepository(Domain::IRepository& repository) noexcept
+    std::vector<Domain::ProductPtr> AbstractUnitOfWork::getUpdatedProducts() const
     {
-        _trackingRepository = std::make_unique<Adapters::Repository::TrackingRepository>(repository);
+        if (!_trackingRepository)
+            throw std::runtime_error("Repository is not set");
+
+        return _trackingRepository->GetUpdated();
+    }
+
+    void AbstractUnitOfWork::setRepository(Domain::IRepository& repository)
+    {
+        _trackingRepository =
+            std::make_unique<Adapters::Repository::TrackingRepository>(repository);
     }
 }

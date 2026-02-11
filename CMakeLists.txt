@@ -6,7 +6,7 @@ include(DownloadUserver)
 
 find_package(
     userver
-    COMPONENTS core postgresql redis
+    COMPONENTS core postgresql redis chaotic
     QUIET
 )
 if(NOT userver_FOUND)
@@ -21,7 +21,10 @@ include_directories(src)
 
 add_library(
     ${PROJECT_NAME}_objs OBJECT
+    src/Domain/Product/OrderLine.hpp
+    src/Domain/Product/Batch.hpp
     src/Domain/Product/Batch.cpp
+    src/Domain/Product/Product.hpp
     src/Domain/Product/Product.cpp
     src/Domain/Ports/IMessage.hpp
     src/Domain/Ports/IRepository.hpp
@@ -29,6 +32,7 @@ add_library(
     src/Adapters/Repository/TrackingRepository.cpp
     src/Adapters/Repository/SqlRepository.hpp
     src/Adapters/Repository/SqlRepository.cpp
+    src/Adapters/Notification/EmailSenderStub.hpp
     src/ServiceLayer/UoW/AbstractUnitOfWork.cpp
     src/ServiceLayer/UoW/AbstractUnitOfWork.hpp
     src/ServiceLayer/UoW/IUnitOfWork.hpp

@@ -17,7 +17,8 @@ namespace Allocation::Adapters::Repository
             throw std::invalid_argument("Product is null");
 
         auto sku = product->GetSKU();
-        _transaction.Execute(sql::kInsertproduct, sku, product->GetVersion());
+        _transaction.Execute(
+            sql::kInsertproduct, sku, static_cast<std::int64_t>(product->GetVersion()));
         insertBatches(product->GetBatches());
     }
 
@@ -66,7 +67,8 @@ namespace Allocation::Adapters::Repository
         if (!product)
             throw std::invalid_argument("Product is null");
 
-        _transaction.Execute(sql::kUpdateproductversion, product->GetSKU(), product->GetVersion());
+        _transaction.Execute(sql::kUpdateproductversion, product->GetSKU(),
+            static_cast<std::int64_t>(product->GetVersion()));
     }
 
     void SqlRepository::getBatchesAndOrderLines(const std::string& sku,
@@ -95,7 +97,7 @@ namespace Allocation::Adapters::Repository
                 eta = userver::utils::datetime::Date(days);
             }
             auto result = _transaction.Execute(sql::kInsertbatch, batch.GetReference(),
-                batch.GetSKU(), batch.GetPurchasedQuantity(), eta);
+                batch.GetSKU(), static_cast<std::int32_t>(batch.GetPurchasedQuantity()), eta);
             int batchId = result.AsSingleRow<int>();
             auto orderLines = batch.GetAllocations();
             std::vector<int> quantities;

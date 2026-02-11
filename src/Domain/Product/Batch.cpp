@@ -11,7 +11,7 @@ namespace Allocation::Domain
     {
     }
 
-    void Batch::SetPurchasedQuantity(size_t newQty) noexcept { _purchasedQuantity = newQty; }
+    void Batch::SetPurchasedQuantity(int64_t newQty) noexcept { _purchasedQuantity = newQty; }
 
     bool Batch::CanAllocate(const OrderLine& line) const noexcept
     {
@@ -36,7 +36,7 @@ namespace Allocation::Domain
         return line;
     }
 
-    int Batch::GetAllocatedQuantity() const noexcept
+    size_t Batch::GetAllocatedQuantity() const noexcept
     {
         size_t allocated = 0;
         for (const auto& line : _allocations)
@@ -44,7 +44,7 @@ namespace Allocation::Domain
         return allocated;
     }
 
-    int Batch::GetAvailableQuantity() const noexcept
+    size_t Batch::GetAvailableQuantity() const noexcept
     {
         size_t allocated = 0;
         for (const auto& line : _allocations)
@@ -52,7 +52,7 @@ namespace Allocation::Domain
         return _purchasedQuantity - allocated;
     }
 
-    int Batch::GetPurchasedQuantity() const noexcept { return _purchasedQuantity; }
+    size_t Batch::GetPurchasedQuantity() const noexcept { return _purchasedQuantity; }
 
     std::string Batch::GetReference() const noexcept { return _reference; }
 

@@ -4,7 +4,6 @@
 #include "IUnitOfWork.hpp"
 
 
-
 namespace Allocation::ServiceLayer::UoW
 {
     /// @brief Абстрактный базовый класс для реализации паттерна "Единица работы".
@@ -21,7 +20,7 @@ namespace Allocation::ServiceLayer::UoW
 
         /// @brief Проверяет, были ли изменения зафиксированы.
         /// @return true, если изменения зафиксированы, иначе false.
-        bool IsCommitted() const noexcept override;
+        bool IsCommitted() const override ;
 
         /// @brief Возвращает репозиторий для работы с агрегатами-продуктами.
         [[nodiscard]] Domain::IRepository& GetProductRepository() override;
@@ -29,15 +28,20 @@ namespace Allocation::ServiceLayer::UoW
         /// @brief Возвращает новые сообщения, сгенерированные продуктами
         /// в рамках текущей единицы работы.
         /// @return Сообщения сгенерированные в отслеживаемых агрегатах.
-        [[nodiscard]] std::vector<Domain::IMessagePtr> GetNewMessages() noexcept override;
+        [[nodiscard]] std::vector<Domain::IMessagePtr> GetNewMessages() override;
 
     protected:
-        [[nodiscard]] std::vector<Domain::ProductPtr> getUpdatedProducts() const noexcept;
+        [[nodiscard]] std::vector<Domain::ProductPtr> getUpdatedProducts() const;
 
-        void setRepository(Domain::IRepository& repository) noexcept;
+        void setRepository(Domain::IRepository& repository);
+
+        virtual void commit() = 0;
+        
+        virtual void rollBack() = 0;
 
     private:
         std::unique_ptr<Adapters::Repository::TrackingRepository> _trackingRepository;
+        std::vector<Domain::IMessagePtr> _newMessages;
         bool _isCommitted{false};
     };
 }

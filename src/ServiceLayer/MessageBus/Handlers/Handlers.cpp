@@ -19,6 +19,7 @@ namespace Allocation::ServiceLayer::Handlers
         }
         product->AddBatch(
             Allocation::Domain::Batch(message->ref, message->sku, message->qty, message->eta));
+        repo.Update(product);
         uow.Commit();
     }
 
@@ -31,6 +32,7 @@ namespace Allocation::ServiceLayer::Handlers
             throw Exceptions::InvalidSku(command->sku);
 
         product->Allocate(line);
+        repo.Update(product);
         uow.Commit();
     }
 
@@ -42,10 +44,12 @@ namespace Allocation::ServiceLayer::Handlers
     void ChangeBatchQuantity(
         UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Commands::ChangeBatchQuantity> command)
     {
-        auto product = uow.GetProductRepository().GetByBatchRef(command->ref);
+        auto& repo = uow.GetProductRepository();
+        auto product = repo.GetByBatchRef(command->ref);
         if (!product)
             throw std::invalid_argument("Invalid batch reference.");
         product->ChangeBatchQuantity(command->ref, command->qty);
+        repo.Update(product);
         uow.Commit();
     }
 

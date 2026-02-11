@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Precompile.hpp"
 #include "OrderLine.hpp"
 
 
 namespace Allocation::Domain
 {
     /// @brief Представляет партию поставки продукции для распределения.
-    class Batch
+    class Batch final
     {
     public:
         /// @brief Конструктор.
@@ -15,12 +14,12 @@ namespace Allocation::Domain
         /// @param sku Артикул продукции.
         /// @param quantity Количество продукции в партии.
         /// @param eta Ожидаемая дата поставки.
-        Batch(const std::string& reference, const std::string& sku, size_t quantity,
+        explicit Batch(const std::string& reference, const std::string& sku, size_t quantity,
             std::optional<std::chrono::year_month_day> eta = std::nullopt);
 
         /// @brief Устанавливает количество продукции в партии.
         /// @param newQty Новое количество.
-        void SetPurchasedQuantity(size_t newQty) noexcept;
+        void SetPurchasedQuantity(int64_t newQty) noexcept;
 
         /// @brief Проверяет, можно ли распределить позицию заказа в партии.
         /// @param line Позиция заказа для проверки.
@@ -38,15 +37,15 @@ namespace Allocation::Domain
 
         /// @brief Возвращает количество распределённых товаров в партии.
         /// @return Количество распределённой продукции в партии.
-        [[nodiscard]] int GetAllocatedQuantity() const noexcept;
+        [[nodiscard]] size_t GetAllocatedQuantity() const noexcept;
 
         /// @brief Возвращает доступное количество продукции в партии.
         /// @return Доступное количество продукции в партии.
-        [[nodiscard]] int GetAvailableQuantity() const noexcept;
+        [[nodiscard]] size_t GetAvailableQuantity() const noexcept;
 
         /// @brief Возвращает количество продукции в партии заказа.
         /// @return Количество продукции в партии.
-        [[nodiscard]] int GetPurchasedQuantity() const noexcept;
+        [[nodiscard]] size_t GetPurchasedQuantity() const noexcept;
 
         /// @brief Возвращает ссылку партии заказа.
         /// @return Ссылка партии заказа.
@@ -67,7 +66,7 @@ namespace Allocation::Domain
     private:
         std::string _reference;
         std::string _sku;
-        size_t _purchasedQuantity;
+        int64_t _purchasedQuantity;
         std::optional<std::chrono::year_month_day> _eta;
         std::unordered_set<OrderLine> _allocations;
     };

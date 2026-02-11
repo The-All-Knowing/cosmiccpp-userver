@@ -28,7 +28,7 @@ namespace Allocation::ServiceLayer::Handlers
         /// @details В данном примере адрес получателя и текст сообщения захардкожены.
         void operator()(std::shared_ptr<Message> event) const
         {
-            //_notifier("stock@made.com", std::format("Out of stock for {}", event->sku));
+            _notifier("stock@made.com", fmt::format("Out of stock for {}", event->sku));
         }
 
     private:

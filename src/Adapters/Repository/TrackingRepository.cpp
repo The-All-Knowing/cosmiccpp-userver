@@ -7,22 +7,26 @@ namespace Allocation::Adapters::Repository
 
     void TrackingRepository::Add(Domain::ProductPtr product)
     {
+        if (_seenProducts.contains(product->GetSKU()))
+            throw std::invalid_argument("Product with the same SKU already exists in the repository");
         _repo.Add(product);
-        _updatedProducts.try_emplace(product->GetSKU(), product);
-        _seenProducts.try_emplace(product->GetSKU(), product);
+        _updatedProducts.emplace(product->GetSKU(), product);
+        _seenProducts.emplace(product->GetSKU(), product);
     }
 
     void TrackingRepository::Update(Domain::ProductPtr product)
     {
         _repo.Update(product);
-        _updatedProducts.try_emplace(product->GetSKU(), product);
+        _updatedProducts.insert_or_assign(product->GetSKU(), product);
     }
 
     Domain::ProductPtr TrackingRepository::Get(const std::string& sku)
     {
-        if (!_seenProducts.contains(sku))
-            _seenProducts.emplace(sku, _repo.Get(sku));
-        return _seenProducts[sku];
+        if (const auto it = _seenProducts.find(sku); it != _seenProducts.end())
+            return it->second;
+        if (auto product = _repo.Get(sku))
+            return _seenProducts.emplace(sku, product).first->second;
+        return nullptr;
     }
 
     Domain::ProductPtr TrackingRepository::GetByBatchRef(const std::string& batchRef)
@@ -30,9 +34,9 @@ namespace Allocation::Adapters::Repository
         for (auto& [_, product] : _seenProducts)
             if (product->GetBatch(batchRef).has_value())
                 return product;
-        auto product = _repo.GetByBatchRef(batchRef);
-        _seenProducts.emplace(product->GetSKU(), product);
-        return product;
+        if (auto product = _repo.GetByBatchRef(batchRef))
+            return _seenProducts.emplace(product->GetSKU(), product).first->second;
+        return nullptr;
     }
 
     std::vector<Domain::ProductPtr> TrackingRepository::GetUpdated() const noexcept
@@ -46,7 +50,7 @@ namespace Allocation::Adapters::Repository
 
     void TrackingRepository::Clear() noexcept
     {
-        _updatedProducts.clear();
         _seenProducts.clear();
+        _updatedProducts.clear();
     }
 }

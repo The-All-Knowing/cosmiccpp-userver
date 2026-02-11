@@ -10,16 +10,14 @@ namespace Allocation::Tests
     class FakeUnitOfWork final : public ServiceLayer::UoW::AbstractUnitOfWork
     {
     public:
-        FakeUnitOfWork()
-        {
-            setRepository(_repo);
-        }
+        FakeUnitOfWork() { setRepository(_repo); }
 
-        /// @brief Конструктор.
-        FakeUnitOfWork(FakeRepository& repo) : AbstractUnitOfWork()
-        {
-            setRepository(repo);
-        }
+        FakeUnitOfWork(FakeRepository& repo) : AbstractUnitOfWork() { setRepository(repo); }
+
+    protected:
+        void commit() override {}
+
+        void rollBack() override {}
 
     private:
         FakeRepository _repo;

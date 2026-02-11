@@ -41,12 +41,12 @@ namespace Allocation::ServiceLayer::Handlers
     /// @param event Событие "Отменено распределение позиции заказа".
     void Reallocate(UoW::IUnitOfWork& uow, std::shared_ptr<Domain::Events::Deallocated> event);
 
-    /*
     /// @brief Отправляет уведомление по электронной почте,
     /// по событию "Нет в наличии товара".
     using SendOutOfStockNotification = NotificationHandler<Domain::Events::OutOfStock,
         Allocation::Adapters::Notification::EmailSenderStub>;
 
+/*
     /// @brief Публикует событие в Redis "Распределена позиция заказа".
     using PublishAllocatedEvent = PublisherHandler<Domain::Events::Allocated,
         Allocation::Adapters::Redis::RedisEventPublisher<Domain::Events::Allocated>>;

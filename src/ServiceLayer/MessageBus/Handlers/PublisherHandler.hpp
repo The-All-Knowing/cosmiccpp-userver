@@ -29,9 +29,8 @@ namespace Allocation::ServiceLayer::Handlers
         /// @details В данном примере канал захардкожен как "line_allocated
         void operator()(std::shared_ptr<Message> event) const
         {
-            //Allocation::Loggers::GetLogger()->Debug(
-            //    std::format("publishing: channel={}, event={}", "line_allocated", event->Name()));
-            //_publisher("line_allocated", event);
+            LOG_DEBUG("Publishing event {} to channel {}", event->Name(), "line_allocated");
+            _publisher("line_allocated", event);
         }
 
     private:

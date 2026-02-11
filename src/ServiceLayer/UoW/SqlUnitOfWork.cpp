@@ -14,19 +14,17 @@ namespace Allocation::ServiceLayer::UoW
         setRepository(_repository);
     }
 
-    void SqlUnitOfWork::Commit()
+    void SqlUnitOfWork::commit()
     {
         for (const auto& product : getUpdatedProducts())
             _repository.IncrementVersion(product);
         _transaction.Commit();
-        AbstractUnitOfWork::Commit();
         _transaction = _pgCluster->Begin(userver::storages::postgres::Transaction::RW);
     }
 
-    void SqlUnitOfWork::RollBack()
+    void SqlUnitOfWork::rollBack()
     {
         _transaction.Rollback();
-        AbstractUnitOfWork::RollBack();
         _transaction = _pgCluster->Begin(userver::storages::postgres::Transaction::RW);
     }
 }

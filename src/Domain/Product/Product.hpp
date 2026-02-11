@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Precompile.hpp"
 #include "Batch.hpp"
 #include "Domain/Ports/IMessage.hpp"
 
@@ -9,7 +8,7 @@ namespace Allocation::Domain
 {
     /// @brief Агрегат-продукт, содержит партии заказа с общим артикулом продукции. 
     /// Реализует бизнес-логику распределения позиций заказа в партиях заказа.
-    class Product
+    class Product final
     {
     public:
         /// @brief Создаёт агрегат-продукт.
@@ -19,24 +18,17 @@ namespace Allocation::Domain
         explicit Product(const std::string& sku, const std::vector<Batch>& batches = {},
             size_t versionNumber = 0);
 
-        /// @brief Устанавливает флаг изменённости.
-        /// @param modified Новый флаг изменённости.
-        void SetModified(bool modified) noexcept;
-
         /// @brief Добавляет партию поставки к агрегату.
         /// @param batch Добавляемая партия заказа.
         /// @throw std::invalid_argument Выбрасывается, если артикул партии не совпадает с артикулом
         /// агрегата.
-        /// @return true — если партия добавлена, иначе false.
-        bool AddBatch(const Batch& batch);
+        void AddBatch(const Batch& batch);
 
         /// @brief Добавляет несколько партий заказа к агрегату.
         /// @param batches Добавляемые партии заказа.
         /// @throw std::invalid_argument Выбрасывается, если артикул партии не совпадает с артикулом
         /// агрегата.
-        /// @return true — если партии добавлены, иначе false.
-        /// @note Либо добавляет все партии, либо не добавляет ни одной.
-        bool AddBatches(const std::vector<Batch>& batches);
+        void AddBatches(const std::vector<Batch>& batches);
 
         /// @brief Распределяет позицию заказа в партии заказа агрегата.
         /// @param line Позиция заказа для распределения.
@@ -49,7 +41,7 @@ namespace Allocation::Domain
         /// @param ref Ссылка на партию поставки.
         /// @param qty Новое количество продукции.
         /// @return true - если партия найдена и количество изменено, иначе false.
-        bool ChangeBatchQuantity(const std::string& ref, size_t qty);
+        void ChangeBatchQuantity(const std::string& ref, size_t qty);
 
         /// @brief Возвращает все партии заказа агрегата.
         /// @return Партии заказа агрегата.
@@ -59,10 +51,6 @@ namespace Allocation::Domain
         /// @param reference Ссылка на партию поставки.
         /// @return Партия заказа, если найдена, иначе std::nullopt.
         [[nodiscard]] std::optional<Batch> GetBatch(const std::string& reference) const noexcept;
-
-        /// @brief Возвращает ссылки изменённых партий заказа.
-        /// @return Ссылки изменённых партий заказа.
-        [[nodiscard]] std::vector<std::string> GetModifiedBatches() const noexcept;
 
         /// @brief Возвращает номер версии агрегата.
         /// @return Номер версии.

@@ -1,10 +1,6 @@
 #include "MessageBus.hpp"
 
-#include "Precompile.hpp"
-
-//#include "Domain/Events/OutOfStock.hpp"
-//#include "ServiceLayer/UoW/SqlUnitOfWork.hpp"
-//#include "Utilities/Loggers/ILogger.hpp"
+#include <userver/logging/log.hpp>
 
 
 namespace Allocation::ServiceLayer
@@ -27,8 +23,8 @@ namespace Allocation::ServiceLayer
             if (message->GetType() == Domain::IMessage::Type::Command)
             {
                 if (!_commandHandlers.contains(typeid(*message)))
-                    throw std::runtime_error("");
-                        //std::format("The {} command doesn`t have a handler", message->Name()));
+                    throw std::runtime_error(
+                        fmt::format("The {} command doesn`t have a handler", message->Name()));
 
                 handleCommand(uow,
                     std::static_pointer_cast<Domain::Commands::AbstractCommand>(message), queue);
@@ -48,41 +44,40 @@ namespace Allocation::ServiceLayer
         _commandHandlers.clear();
     }
 
-    void MessageBus::handleEvent(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Events::EventPtr event,
-        std::queue<Domain::IMessagePtr>& queue) noexcept
+    void MessageBus::handleEvent(ServiceLayer::UoW::IUnitOfWork& uow,
+        Domain::Events::EventPtr event, std::queue<Domain::IMessagePtr>& queue) noexcept
     {
         for (auto& handler : _eventHandlers[typeid(*event)])
         {
             try
             {
-                //Loggers::GetLogger()->Debug(std::format("Handling event {} with handler {}",
-                //    event->Name(), handler.target_type().name()));
+                LOG_DEBUG("Handling event {} with handler {}", event->Name(),
+                    handler.target_type().name());
                 handler(uow, event);
                 for (auto& newMessage : uow.GetNewMessages())
                     queue.push(newMessage);
             }
-            catch (...)
+            catch (const std::exception&)
             {
-                ///Loggers::GetLogger()->Error(
-                //    std::format("Exception handling event {}", event->Name()));
+                LOG_ERROR("Exception handling event {}", event->Name());
             }
         }
     }
 
-    void MessageBus::handleCommand(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Commands::CommandPtr command,
-        std::queue<Domain::IMessagePtr>& queue)
+    void MessageBus::handleCommand(ServiceLayer::UoW::IUnitOfWork& uow,
+        Domain::Commands::CommandPtr command, std::queue<Domain::IMessagePtr>& queue)
     {
-        //Loggers::GetLogger()->Debug(std::format("handling command {}", command->Name()));
+        LOG_DEBUG("handling command {}", command->Name());
         try
         {
-            _commandHandlers.at(typeid(*command))(uow, command);
+            auto test = _commandHandlers.at(typeid(*command));
+            test(uow, command);
             for (auto& newMessage : uow.GetNewMessages())
                 queue.push(newMessage);
         }
-        catch (...)
+        catch (const std::exception&)
         {
-            //Loggers::GetLogger()->Error(
-            //    std::format("Exception handling command {}", command->Name()));
+            LOG_ERROR("Exception handling command {}", command->Name());
             throw;
         }
     }

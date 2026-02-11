@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Precompile.hpp"
-
 
 namespace Allocation::ServiceLayer::Exceptions
 {
@@ -11,7 +9,7 @@ namespace Allocation::ServiceLayer::Exceptions
     public:
         /// @brief Конструктор.
         /// @param sku Недопустимый артикул продукции.
-        explicit InvalidSku(std::string_view sku) : _msg( ""){}//std::format("Invalid sku: {}", sku)) {}
+        explicit InvalidSku(std::string_view sku) : _msg(fmt::format("Invalid sku: {}", std::string(sku))) {}
 
         /// @brief Возвращает текст исключения.
         /// @return Текст исключения.

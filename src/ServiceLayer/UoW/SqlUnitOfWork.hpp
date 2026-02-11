@@ -14,11 +14,12 @@ namespace Allocation::ServiceLayer::UoW
     public:
         SqlUnitOfWork(userver::storages::postgres::ClusterPtr pgCluster);
 
-        void Commit() override;
+    protected:
+        void commit() override;
 
         /// @brief Откатывает внесённые изменения.
         /// @details После отката изменений запускает новую транзакцию.
-        void RollBack() override;
+        void rollBack() override;
 
     private:
         userver::storages::postgres::ClusterPtr _pgCluster;

@@ -20,7 +20,7 @@ namespace Allocation::ServiceLayer::UoW
         virtual void RollBack() = 0;
 
         /// @brief Проверяет, были ли изменения зафиксированы.
-        [[nodiscard]] virtual bool IsCommitted() const noexcept = 0;
+        [[nodiscard]] virtual bool IsCommitted() const = 0;
 
         /// @brief Возвращает репозиторий хранилища продуктов.
         /// @return Репозиторий продуктов.
@@ -28,6 +28,6 @@ namespace Allocation::ServiceLayer::UoW
 
         /// @brief Возвращает новые сообщения из обработанных агрегатов.
         /// @return Новые сообщения порождённые в агрегатах.
-        [[nodiscard]] virtual std::vector<Domain::IMessagePtr> GetNewMessages() noexcept = 0;
+        [[nodiscard]] virtual std::vector<Domain::IMessagePtr> GetNewMessages() = 0;
     };
 }

@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Precompile.hpp"
-
 
 namespace Allocation::Domain
 {
     /// @brief Представляет позицию заказа для распределения.
-    struct OrderLine
+    struct OrderLine final
     {
         /// @brief Ссылка на заказ клиента.
         std::string reference;
