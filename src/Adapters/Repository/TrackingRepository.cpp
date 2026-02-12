@@ -3,21 +3,14 @@
 
 namespace Allocation::Adapters::Repository
 {
-    TrackingRepository::TrackingRepository(Domain::IRepository& repo) : _repo(repo) {}
+    TrackingRepository::TrackingRepository(Domain::ICommonRepository& repo) : _repo(repo) {}
 
     void TrackingRepository::Add(Domain::ProductPtr product)
     {
         if (_seenProducts.contains(product->GetSKU()))
-            throw std::invalid_argument("Product with the same SKU already exists in the repository");
-        _repo.Add(product);
-        _updatedProducts.emplace(product->GetSKU(), product);
+            throw std::invalid_argument(
+                "Product with the same SKU already exists in the repository.");
         _seenProducts.emplace(product->GetSKU(), product);
-    }
-
-    void TrackingRepository::Update(Domain::ProductPtr product)
-    {
-        _repo.Update(product);
-        _updatedProducts.insert_or_assign(product->GetSKU(), product);
     }
 
     Domain::ProductPtr TrackingRepository::Get(const std::string& sku)
@@ -39,18 +32,14 @@ namespace Allocation::Adapters::Repository
         return nullptr;
     }
 
-    std::vector<Domain::ProductPtr> TrackingRepository::GetUpdated() const noexcept
+    std::vector<Domain::ProductPtr> TrackingRepository::GetSeen() const noexcept
     {
-        std::vector<Domain::ProductPtr> updatedProducts;
-        updatedProducts.reserve(_updatedProducts.size());
-        for (const auto& [_, product] : _updatedProducts)
-            updatedProducts.push_back(product);
-        return updatedProducts;
+        std::vector<Domain::ProductPtr> seenProducts;
+        seenProducts.reserve(_seenProducts.size());
+        for (const auto& [_, product] : _seenProducts)
+            seenProducts.push_back(product);
+        return seenProducts;
     }
 
-    void TrackingRepository::Clear() noexcept
-    {
-        _seenProducts.clear();
-        _updatedProducts.clear();
-    }
+    void TrackingRepository::Clear() noexcept { _seenProducts.clear(); }
 }

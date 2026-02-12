@@ -9,8 +9,8 @@
 namespace Allocation::Domain
 {
     Product::Product(
-        const std::string& sku, const std::vector<Batch>& batches, size_t versionNumber)
-        : _sku(sku), _versionNumber(versionNumber)
+        const std::string& sku, const std::vector<Batch>& batches, int64_t versionNumber)
+        : _sku(sku), _version(versionNumber)
     {
         for (const auto& batch : batches)
             _referenceByBatches.emplace(batch.GetReference(), batch);
@@ -76,8 +76,8 @@ namespace Allocation::Domain
         auto it = _referenceByBatches.find(ref);
         if (it == _referenceByBatches.end())
             throw std::invalid_argument("Batch with the given reference not found");
-        int32_t difference = static_cast<int32_t>(newQty) -
-                             static_cast<int32_t>(it->second.GetAvailableQuantity()) +
+        int32_t difference = static_cast<int32_t>(newQty) +
+                             static_cast<int32_t>(it->second.GetAvailableQuantity()) -
                              static_cast<int32_t>(it->second.GetPurchasedQuantity());
         while (difference < 0)
         {
@@ -104,7 +104,7 @@ namespace Allocation::Domain
         return std::nullopt;
     }
 
-    int64_t Product::GetVersion() const noexcept { return _versionNumber; }
+    int64_t Product::GetVersion() const noexcept { return _version; }
 
     std::string Product::GetSKU() const noexcept { return _sku; }
 

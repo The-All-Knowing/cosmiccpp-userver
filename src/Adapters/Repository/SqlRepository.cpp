@@ -11,18 +11,7 @@ namespace Allocation::Adapters::Repository
     {
     }
 
-    void SqlRepository::Add(Domain::ProductPtr product)
-    {
-        if (!product)
-            throw std::invalid_argument("Product is null");
-
-        auto sku = product->GetSKU();
-        _transaction.Execute(
-            sql::kInsertproduct, sku, static_cast<std::int64_t>(product->GetVersion()));
-        insertBatches(product->GetBatches());
-    }
-
-    void SqlRepository::Update(Domain::ProductPtr product)
+    void SqlRepository::Flush(Domain::ProductPtr product)
     {
         if (!product)
             throw std::invalid_argument("Product is null");
@@ -60,15 +49,6 @@ namespace Allocation::Adapters::Repository
         std::vector<OrderLineDTO> orderLines;
         getBatchesAndOrderLines(product.sku, batches, orderLines);
         return makeProduct(product, batches, orderLines);
-    }
-
-    void SqlRepository::IncrementVersion(Domain::ProductPtr product)
-    {
-        if (!product)
-            throw std::invalid_argument("Product is null");
-
-        _transaction.Execute(sql::kUpdateproductversion, product->GetSKU(),
-            static_cast<std::int64_t>(product->GetVersion()));
     }
 
     void SqlRepository::getBatchesAndOrderLines(const std::string& sku,

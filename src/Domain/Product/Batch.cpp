@@ -32,7 +32,6 @@ namespace Allocation::Domain
         auto it = _allocations.begin();
         OrderLine line = *it;
         _allocations.erase(it);
-
         return line;
     }
 
@@ -46,10 +45,7 @@ namespace Allocation::Domain
 
     size_t Batch::GetAvailableQuantity() const noexcept
     {
-        size_t allocated = 0;
-        for (const auto& line : _allocations)
-            allocated += line.quantity;
-        return _purchasedQuantity - allocated;
+        return _purchasedQuantity - GetAllocatedQuantity();
     }
 
     size_t Batch::GetPurchasedQuantity() const noexcept { return _purchasedQuantity; }

@@ -1,9 +1,10 @@
 #include "Handlers.hpp"
 
+#include <Allocation/sql_queries.hpp>
+
 #include "Common.hpp"
 #include "Domain/Product/Product.hpp"
 #include "ServiceLayer/Exceptions.hpp"
-#include <Allocation/sql_queries.hpp>
 
 
 namespace Allocation::ServiceLayer::Handlers
@@ -19,7 +20,6 @@ namespace Allocation::ServiceLayer::Handlers
         }
         product->AddBatch(
             Allocation::Domain::Batch(message->ref, message->sku, message->qty, message->eta));
-        repo.Update(product);
         uow.Commit();
     }
 
@@ -32,7 +32,6 @@ namespace Allocation::ServiceLayer::Handlers
             throw Exceptions::InvalidSku(command->sku);
 
         product->Allocate(line);
-        repo.Update(product);
         uow.Commit();
     }
 
@@ -49,7 +48,6 @@ namespace Allocation::ServiceLayer::Handlers
         if (!product)
             throw std::invalid_argument("Invalid batch reference.");
         product->ChangeBatchQuantity(command->ref, command->qty);
-        repo.Update(product);
         uow.Commit();
     }
 
@@ -57,15 +55,13 @@ namespace Allocation::ServiceLayer::Handlers
         std::shared_ptr<Domain::Events::Allocated> event)
     {
         cluster->Execute(userver::storages::postgres::ClusterHostType::kMaster,
-            Allocation::sql::kInsertallocationsview,
-            event->orderid, event->sku, event->batchref);
+            Allocation::sql::kInsertallocationsview, event->orderid, event->sku, event->batchref);
     }
 
     void RemoveAllocationFromReadModel(userver::storages::postgres::ClusterPtr cluster,
         std::shared_ptr<Domain::Events::Deallocated> event)
     {
         cluster->Execute(userver::storages::postgres::ClusterHostType::kMaster,
-            Allocation::sql::kDeleteallocationsview,
-            event->orderid, event->sku);
+            Allocation::sql::kDeleteallocationsview, event->orderid, event->sku);
     }
 }

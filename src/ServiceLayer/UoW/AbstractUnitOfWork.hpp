@@ -12,6 +12,8 @@ namespace Allocation::ServiceLayer::UoW
     class AbstractUnitOfWork : public IUnitOfWork
     {
     public:
+        AbstractUnitOfWork() = default;
+
         /// @brief Подтверждает изменения.
         void Commit() override;
 
@@ -31,15 +33,18 @@ namespace Allocation::ServiceLayer::UoW
         [[nodiscard]] std::vector<Domain::IMessagePtr> GetNewMessages() override;
 
     protected:
-        [[nodiscard]] std::vector<Domain::ProductPtr> getUpdatedProducts() const;
+        [[nodiscard]] std::vector<Domain::ProductPtr> getSeenProducts() const;
 
-        void setRepository(Domain::IRepository& repository);
+        void setRepository(Domain::ICommonRepository& repository);
 
         virtual void commit() = 0;
         
         virtual void rollBack() = 0;
 
     private:
+        AbstractUnitOfWork(const AbstractUnitOfWork&) = delete;
+        AbstractUnitOfWork& operator=(const AbstractUnitOfWork&) = delete;
+
         std::unique_ptr<Adapters::Repository::TrackingRepository> _trackingRepository;
         std::vector<Domain::IMessagePtr> _newMessages;
         bool _isCommitted{false};

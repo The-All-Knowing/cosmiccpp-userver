@@ -15,8 +15,8 @@ namespace Allocation::Domain
         /// @param sku Артикул продукции.
         /// @param batches Список партий заказа продукции.
         /// @param versionNumber Номер версии агрегата.
-        explicit Product(const std::string& sku, const std::vector<Batch>& batches = {},
-            size_t versionNumber = 0);
+        explicit Product(
+            const std::string& sku, const std::vector<Batch>& batches = {}, int64_t version = 0);
 
         /// @brief Добавляет партию поставки к агрегату.
         /// @param batch Добавляемая партия заказа.
@@ -40,7 +40,6 @@ namespace Allocation::Domain
         /// @brief Изменяет количество продукции в партии заказа.
         /// @param ref Ссылка на партию поставки.
         /// @param qty Новое количество продукции.
-        /// @return true - если партия найдена и количество изменено, иначе false.
         void ChangeBatchQuantity(const std::string& ref, size_t qty);
 
         /// @brief Возвращает все партии заказа агрегата.
@@ -71,7 +70,7 @@ namespace Allocation::Domain
         std::string _sku;
         std::unordered_map<std::string, Batch> _referenceByBatches;
         std::vector<Domain::IMessagePtr> _messages;
-        size_t _versionNumber;
+        int64_t _version;
     };
 
     using ProductPtr = std::shared_ptr<Product>;

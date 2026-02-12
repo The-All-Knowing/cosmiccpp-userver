@@ -10,6 +10,8 @@ namespace Allocation::ServiceLayer::UoW
     class IUnitOfWork
     {
     public:
+        IUnitOfWork() = default;
+
         /// @brief Деструктор.
         virtual ~IUnitOfWork() = default;
 
@@ -29,5 +31,12 @@ namespace Allocation::ServiceLayer::UoW
         /// @brief Возвращает новые сообщения из обработанных агрегатов.
         /// @return Новые сообщения порождённые в агрегатах.
         [[nodiscard]] virtual std::vector<Domain::IMessagePtr> GetNewMessages() = 0;
+
+    private:
+        /// @brief Удалённый конструктор копирования.
+        IUnitOfWork(const IUnitOfWork&) = delete;
+
+        /// @brief Удалённый оператор присвоения копирования.
+        IUnitOfWork& operator=(const IUnitOfWork&) = delete;
     };
 }

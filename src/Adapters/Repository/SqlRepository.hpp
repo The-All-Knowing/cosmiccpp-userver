@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Precompile.hpp"
-
 #include <userver/storages/postgres/transaction.hpp>
 #include <userver/utils/datetime/date.hpp>
 
@@ -11,7 +9,7 @@
 namespace Allocation::Adapters::Repository
 {
     /// @brief Реализация репозитория для работы с PostgreSQL СУБД.
-    class SqlRepository final : public Domain::IRepository
+    class SqlRepository final : public Domain::ICommonRepository
     {
         struct OrderLineDTO final
         {
@@ -39,15 +37,11 @@ namespace Allocation::Adapters::Repository
     public:
         explicit SqlRepository(userver::storages::postgres::Transaction& transaction);
 
-        void Add(Domain::ProductPtr product) override;
-
-        void Update(Domain::ProductPtr product) override;
-
         [[nodiscard]] Domain::ProductPtr Get(const std::string& sku) override;
 
         [[nodiscard]] Domain::ProductPtr GetByBatchRef(const std::string& batchRef) override;
 
-        void IncrementVersion(Domain::ProductPtr product);
+        void Flush(Domain::ProductPtr product);
 
     private:
         void getBatchesAndOrderLines(const std::string& sku, std::vector<BatchDTO>& batches,
@@ -59,6 +53,7 @@ namespace Allocation::Adapters::Repository
             const std::vector<BatchDTO>& batches,
             const std::vector<OrderLineDTO>& orderLines) const;
 
+        std::unordered_map<std::string, int64_t> _loadedProductsDTO;
         userver::storages::postgres::Transaction& _transaction;
     };
 }

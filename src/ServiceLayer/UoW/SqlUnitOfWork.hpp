@@ -22,6 +22,9 @@ namespace Allocation::ServiceLayer::UoW
         void rollBack() override;
 
     private:
+        SqlUnitOfWork(const SqlUnitOfWork&) = delete;
+        SqlUnitOfWork& operator=(const SqlUnitOfWork&) = delete;
+
         userver::storages::postgres::ClusterPtr _pgCluster;
         userver::storages::postgres::Transaction _transaction;
         Adapters::Repository::SqlRepository _repository;

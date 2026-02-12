@@ -7,7 +7,7 @@ namespace Allocation::ServiceLayer::UoW
     {
         if (!_trackingRepository)
             throw std::runtime_error("Repository is not set");
-        for (auto& product : getUpdatedProducts())
+        for (auto& product : getSeenProducts())
         {
             auto messages = product->Messages();
             _newMessages.insert(_newMessages.end(), messages.begin(), messages.end());
@@ -48,15 +48,15 @@ namespace Allocation::ServiceLayer::UoW
         return std::move(_newMessages);
     }
 
-    std::vector<Domain::ProductPtr> AbstractUnitOfWork::getUpdatedProducts() const
+    std::vector<Domain::ProductPtr> AbstractUnitOfWork::getSeenProducts() const
     {
         if (!_trackingRepository)
             throw std::runtime_error("Repository is not set");
 
-        return _trackingRepository->GetUpdated();
+        return _trackingRepository->GetSeen();
     }
 
-    void AbstractUnitOfWork::setRepository(Domain::IRepository& repository)
+    void AbstractUnitOfWork::setRepository(Domain::ICommonRepository& repository)
     {
         _trackingRepository =
             std::make_unique<Adapters::Repository::TrackingRepository>(repository);
