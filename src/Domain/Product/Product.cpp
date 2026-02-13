@@ -8,9 +8,8 @@
 
 namespace Allocation::Domain
 {
-    Product::Product(
-        const std::string& sku, const std::vector<Batch>& batches, int64_t versionNumber)
-        : _sku(sku), _version(versionNumber)
+    Product::Product(const std::string& sku, const std::vector<Batch>& batches, int64_t version)
+        : _sku(sku), _version(version)
     {
         for (const auto& batch : batches)
             _referenceByBatches.emplace(batch.GetReference(), batch);
@@ -21,10 +20,10 @@ namespace Allocation::Domain
         if (batch.GetSKU() != _sku)
             throw std::invalid_argument("Batch SKU does not match Product SKU");
 
-        if (_referenceByBatches.contains(batch.GetReference()))
+        const auto ref = batch.GetReference();
+        if (_referenceByBatches.contains(ref))
             throw std::invalid_argument("Batch with the same reference already exists");
-        auto batchRef = batch.GetReference();
-        _referenceByBatches.emplace(batchRef, batch);
+        _referenceByBatches.emplace(ref, batch);
     }
 
     void Product::AddBatches(const std::vector<Batch>& batches)
@@ -34,13 +33,12 @@ namespace Allocation::Domain
         {
             if (batch.GetSKU() != _sku)
                 throw std::invalid_argument("Batch SKU does not match Product SKU");
-            if (referenceByBatches.contains(batch.GetReference()))
+            const auto ref = batch.GetReference();
+            if (_referenceByBatches.contains(ref))
                 throw std::invalid_argument("Batch with the same reference already exists");
-
-            auto batchRef = batch.GetReference();
-            referenceByBatches.emplace(batchRef, batch);
+            referenceByBatches.emplace(ref, batch);
         }
-        _referenceByBatches = std::move(referenceByBatches);
+        _referenceByBatches.merge(std::move(referenceByBatches));
     }
 
     std::optional<std::string> Product::Allocate(const OrderLine& line)
@@ -63,6 +61,7 @@ namespace Allocation::Domain
 
             auto ref = batch.get().GetReference();
             batch.get().Allocate(line);
+            ++_version;
             _messages.push_back(
                 Make<Events::Allocated>(line.reference, line.sku, line.quantity, ref));
             return batch.get().GetReference();
@@ -99,7 +98,8 @@ namespace Allocation::Domain
 
     std::optional<Batch> Product::GetBatch(const std::string& batchReference) const noexcept
     {
-        if (auto it = _referenceByBatches.find(batchReference); it != _referenceByBatches.end())
+        if (const auto it = _referenceByBatches.find(batchReference);
+            it != _referenceByBatches.end())
             return it->second;
         return std::nullopt;
     }
@@ -116,14 +116,13 @@ namespace Allocation::Domain
     {
         if (lhs.GetSKU() != rhs.GetSKU() || lhs.GetVersion() != rhs.GetVersion())
             return false;
-        auto lhsBatches = lhs.GetBatches();
-        auto rhsBatches = rhs.GetBatches();
-        if (lhsBatches.size() != rhsBatches.size())
+        const auto lhsBatches = lhs.GetBatches();
+        if (lhsBatches.size() != rhs.GetBatches().size())
             return false;
 
         for (const auto& lhsBatch : lhsBatches)
         {
-            auto rhsBatch = rhs.GetBatch(lhsBatch.GetReference());
+            const auto rhsBatch = rhs.GetBatch(lhsBatch.GetReference());
             if (!rhsBatch.has_value() || lhsBatch != rhsBatch)
                 return false;
         }

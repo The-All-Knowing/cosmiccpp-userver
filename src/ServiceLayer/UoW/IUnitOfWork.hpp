@@ -33,10 +33,7 @@ namespace Allocation::ServiceLayer::UoW
         [[nodiscard]] virtual std::vector<Domain::IMessagePtr> GetNewMessages() = 0;
 
     private:
-        /// @brief Удалённый конструктор копирования.
         IUnitOfWork(const IUnitOfWork&) = delete;
-
-        /// @brief Удалённый оператор присвоения копирования.
         IUnitOfWork& operator=(const IUnitOfWork&) = delete;
     };
 }

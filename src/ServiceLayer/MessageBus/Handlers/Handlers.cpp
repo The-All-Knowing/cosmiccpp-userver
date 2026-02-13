@@ -30,7 +30,6 @@ namespace Allocation::ServiceLayer::Handlers
         auto product = repo.Get(command->sku);
         if (!product)
             throw Exceptions::InvalidSku(command->sku);
-
         product->Allocate(line);
         uow.Commit();
     }

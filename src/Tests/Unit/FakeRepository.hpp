@@ -25,9 +25,7 @@ namespace Allocation::Tests
         /// @param product Продукт для добавления.
         void Add(Domain::ProductPtr product) override
         {
-            const auto result = _skuByProduct.emplace(product->GetSKU(), product);
-            if (!result.second)
-                throw std::invalid_argument("Product with the same SKU already exists");
+            _skuByProduct.try_emplace(product->GetSKU(), product);
         }
 
         /// @brief Получает продукт из репозитория.
@@ -49,11 +47,6 @@ namespace Allocation::Tests
                 if (product->GetBatch(batchRef).has_value())
                     return product;
             return nullptr;
-        }
-
-        virtual void Update(Domain::ProductPtr product) override
-        {
-            _skuByProduct.insert_or_assign(product->GetSKU(), product);
         }
 
         std::unordered_map<std::string, Domain::ProductPtr> _skuByProduct;

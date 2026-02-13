@@ -21,7 +21,7 @@ namespace Allocation::Domain
     void Batch::Allocate(const OrderLine& line) noexcept
     {
         if (CanAllocate(line) && !_allocations.contains(line))
-            _allocations.insert(line);
+            _allocations.emplace(line);
     }
 
     OrderLine Batch::DeallocateOne()

@@ -91,6 +91,14 @@ namespace Allocation::Tests
         EXPECT_EQ(event->sku, batch.GetSKU());
     }
 
+    TEST(Product, test_increments_version_number)
+    {
+        Domain::OrderLine line("oref", "SCANDI-PEN", 10);
+        Domain::Product product("SCANDI-PEN", {Domain::Batch("b1", "SCANDI-PEN", 100)}, 7);
+        product.Allocate(line);
+        EXPECT_EQ(product.GetVersion(), 8);
+    }
+
     TEST(Product, test_add_batch_marks_modified)
     {
         Domain::Batch batch("b-add", "DESK", 100);

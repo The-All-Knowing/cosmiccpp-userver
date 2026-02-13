@@ -15,7 +15,11 @@ namespace Allocation::Tests
         FakeUnitOfWork(FakeRepository& repo) : AbstractUnitOfWork() { setRepository(repo); }
 
     protected:
-        void commit() override {}
+        void commit() override
+        {
+            for (const auto& product : getSeenProducts())
+                _repo.Add(product);
+        }
 
         void rollBack() override {}
 

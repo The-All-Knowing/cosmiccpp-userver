@@ -25,8 +25,6 @@ namespace Allocation::Domain
     class IRepository : public ICommonRepository
     {
     public:
-        IRepository() = default;   
-
         virtual void Add(Domain::ProductPtr product) = 0;
     };
 }

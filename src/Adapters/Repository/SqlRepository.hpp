@@ -44,6 +44,10 @@ namespace Allocation::Adapters::Repository
         void Flush(Domain::ProductPtr product);
 
     private:
+        void update(Domain::ProductPtr product);
+
+        void insert(Domain::ProductPtr product);
+
         void getBatchesAndOrderLines(const std::string& sku, std::vector<BatchDTO>& batches,
             std::vector<OrderLineDTO>& orderLines) const;
 
@@ -53,7 +57,7 @@ namespace Allocation::Adapters::Repository
             const std::vector<BatchDTO>& batches,
             const std::vector<OrderLineDTO>& orderLines) const;
 
-        std::unordered_map<std::string, int64_t> _loadedProductsDTO;
+        std::unordered_map<std::string, int64_t> _loadedProducts;
         userver::storages::postgres::Transaction& _transaction;
     };
 }
