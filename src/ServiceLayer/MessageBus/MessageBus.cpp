@@ -26,14 +26,13 @@ namespace Allocation::ServiceLayer
                     throw std::runtime_error(
                         fmt::format("The {} command doesn`t have a handler", message->Name()));
 
-                handleCommand(uow,
-                    std::static_pointer_cast<Domain::Commands::AbstractCommand>(message), queue);
+                handleCommand(
+                    uow, std::static_pointer_cast<Domain::AbstractCommand>(message), queue);
             }
             else if (message->GetType() == Domain::IMessage::Type::Event &&
                      _eventHandlers.contains(typeid(*message)))
             {
-                handleEvent(
-                    uow, std::static_pointer_cast<Domain::Events::AbstractEvent>(message), queue);
+                handleEvent(uow, std::static_pointer_cast<Domain::AbstractEvent>(message), queue);
             }
         }
     }
@@ -44,8 +43,8 @@ namespace Allocation::ServiceLayer
         _commandHandlers.clear();
     }
 
-    void MessageBus::handleEvent(ServiceLayer::UoW::IUnitOfWork& uow,
-        Domain::Events::EventPtr event, std::queue<Domain::IMessagePtr>& queue) noexcept
+    void MessageBus::handleEvent(ServiceLayer::UoW::IUnitOfWork& uow, Domain::EventPtr event,
+        std::queue<Domain::IMessagePtr>& queue) noexcept
     {
         for (auto& handler : _eventHandlers[typeid(*event)])
         {
@@ -64,14 +63,13 @@ namespace Allocation::ServiceLayer
         }
     }
 
-    void MessageBus::handleCommand(ServiceLayer::UoW::IUnitOfWork& uow,
-        Domain::Commands::CommandPtr command, std::queue<Domain::IMessagePtr>& queue)
+    void MessageBus::handleCommand(ServiceLayer::UoW::IUnitOfWork& uow, Domain::CommandPtr command,
+        std::queue<Domain::IMessagePtr>& queue)
     {
         LOG_DEBUG("handling command {}", command->Name());
         try
         {
-            auto test = _commandHandlers.at(typeid(*command));
-            test(uow, command);
+            _commandHandlers.at(typeid(*command))(uow, command);
             for (auto& newMessage : uow.GetNewMessages())
                 queue.push(newMessage);
         }

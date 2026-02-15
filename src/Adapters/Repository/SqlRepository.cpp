@@ -25,11 +25,11 @@ namespace Allocation::Adapters::Repository
     void SqlRepository::update(Domain::ProductPtr product)
     {
         auto sku = product->GetSKU();
-        auto respond = _transaction.Execute(sql::kDeletebatches, sku);
-        auto batchIds = respond.AsContainer<std::vector<int>>();
-        respond = _transaction.Execute(sql::kDeleteorderlines, batchIds);
-        auto orderLineIds = respond.AsContainer<std::vector<int>>();
-        respond = _transaction.Execute(sql::kDeleteallocations, batchIds, orderLineIds);
+        auto response = _transaction.Execute(sql::kDeletebatches, sku);
+        auto batchIds = response.AsContainer<std::vector<int>>();
+        response = _transaction.Execute(sql::kDeleteorderlines, batchIds);
+        auto orderLineIds = response.AsContainer<std::vector<int>>();
+        response = _transaction.Execute(sql::kDeleteallocations, batchIds, orderLineIds);
         _transaction.Execute(sql::kUpdateproductversion, sku, product->GetVersion());
         insertBatches(product->GetBatches());
         _loadedProducts[sku] = product->GetVersion();
@@ -48,8 +48,8 @@ namespace Allocation::Adapters::Repository
         if (sku.empty())
             throw std::invalid_argument("SKU is empty");
 
-        auto respond = _transaction.Execute(sql::kSelectproductbysku, sku);
-        auto product = respond.AsSingleRow<ProductDTO>();
+        auto response = _transaction.Execute(sql::kSelectproductbysku, sku);
+        auto product = response.AsSingleRow<ProductDTO>();
         std::vector<BatchDTO> batches;
         std::vector<OrderLineDTO> orderLines;
         getBatchesAndOrderLines(product.sku, batches, orderLines);
@@ -63,8 +63,8 @@ namespace Allocation::Adapters::Repository
         if (batchRef.empty())
             throw std::invalid_argument("Batch reference is empty");
 
-        auto respond = _transaction.Execute(sql::kSelectproductbybatchref, batchRef);
-        auto product = respond.AsSingleRow<ProductDTO>();
+        auto response = _transaction.Execute(sql::kSelectproductbybatchref, batchRef);
+        auto product = response.AsSingleRow<ProductDTO>();
         std::vector<BatchDTO> batches;
         std::vector<OrderLineDTO> orderLines;
         getBatchesAndOrderLines(product.sku, batches, orderLines);
@@ -76,14 +76,14 @@ namespace Allocation::Adapters::Repository
     void SqlRepository::getBatchesAndOrderLines(const std::string& sku,
         std::vector<BatchDTO>& batches, std::vector<OrderLineDTO>& orderLines) const
     {
-        auto respond = _transaction.Execute(sql::kSelectbatchesbysku, sku);
-        batches = respond.AsContainer<std::vector<BatchDTO>>();
+        auto response = _transaction.Execute(sql::kSelectbatchesbysku, sku);
+        batches = response.AsContainer<std::vector<BatchDTO>>();
         std::vector<int> batchIds;
         batchIds.reserve(batches.size());
         for (const auto& batch : batches)
             batchIds.push_back(batch.id);
-        respond = _transaction.Execute(sql::kSelectorderlinesbybatchpk, batchIds);
-        orderLines = respond.AsContainer<std::vector<OrderLineDTO>>();
+        response = _transaction.Execute(sql::kSelectorderlinesbybatchpk, batchIds);
+        orderLines = response.AsContainer<std::vector<OrderLineDTO>>();
     }
 
     void SqlRepository::insertBatches(const std::vector<Domain::Batch>& batches)
@@ -98,17 +98,17 @@ namespace Allocation::Adapters::Repository
                                              std::chrono::day{src->day()};
                 eta = userver::utils::datetime::Date(days);
             }
-            auto respond = _transaction.Execute(sql::kInsertbatch, batch.GetReference(),
+            auto response = _transaction.Execute(sql::kInsertbatch, batch.GetReference(),
                 batch.GetSKU(), static_cast<std::int32_t>(batch.GetPurchasedQuantity()), eta);
-            int batchId = respond.AsSingleRow<int>();
+            int batchId = response.AsSingleRow<int>();
             auto orderLines = batch.GetAllocations();
             std::vector<int> quantities;
             quantities.reserve(orderLines.size());
             for (const auto& orderLine : orderLines)
                 quantities.push_back(orderLine.quantity);
-            respond =
+            response =
                 _transaction.Execute(sql::kInsertorderlines, batchId, batch.GetSKU(), quantities);
-            auto orderLineIds = respond.AsContainer<std::vector<int>>();
+            auto orderLineIds = response.AsContainer<std::vector<int>>();
             _transaction.Execute(sql::kInsertallocations, batchId, orderLineIds);
         }
     }

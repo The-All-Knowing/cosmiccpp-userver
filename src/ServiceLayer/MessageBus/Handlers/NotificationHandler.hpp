@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Domain/Events/AbstractEvent.hpp"
+#include "Domain/Events.hpp"
 
 
 namespace Allocation::ServiceLayer::Handlers
@@ -15,7 +15,7 @@ namespace Allocation::ServiceLayer::Handlers
     /// @tparam Message Тип сообщения.
     /// @tparam Notifier Тип отправителя уведомлений.
     template <typename Message, NotificationSender Notifier>
-        requires std::derived_from<Message, Domain::Events::AbstractEvent>
+        requires std::derived_from<Message, Domain::AbstractEvent>
     class NotificationHandler
     {
     public:

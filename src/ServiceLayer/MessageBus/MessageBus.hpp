@@ -2,9 +2,9 @@
 
 #include <userver/components/component_base.hpp>
 
-#include "Domain/Commands/AbstractCommand.hpp"
-#include "Domain/Events/AbstractEvent.hpp"
+#include "Domain/Events.hpp"
 #include "ServiceLayer/UoW/IUnitOfWork.hpp"
+#include "ServiceLayer/CommandFactory.hpp"
 
 
 namespace Allocation::ServiceLayer
@@ -12,14 +12,14 @@ namespace Allocation::ServiceLayer
     /// @brief Концепция для обработчиков событий конкретного типа.
     template <typename F, typename T>
     concept EventHandlerFor =
-        std::derived_from<T, Domain::Events::AbstractEvent> &&
+        std::derived_from<T, Domain::AbstractEvent> &&
         (std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&, std::shared_ptr<T>> ||
             std::is_invocable_v<F, std::shared_ptr<T>>);
 
     /// @brief Концепция для обработчиков команд конкретного типа.
     template <typename F, typename T>
     concept CommandHandlerFor =
-        std::derived_from<T, Domain::Commands::AbstractCommand> &&
+        std::derived_from<T, Domain::AbstractCommand> &&
         std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&, std::shared_ptr<T>>;
 
 
@@ -27,12 +27,18 @@ namespace Allocation::ServiceLayer
     class MessageBus final
     {
         using EventHandler =
-            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::Events::EventPtr)>;
+            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::EventPtr)>;
         using CommandHandler =
-            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::Commands::CommandPtr)>;
+            std::function<void(ServiceLayer::UoW::IUnitOfWork&, Domain::CommandPtr)>;
 
     public:
         static MessageBus& Instance();
+
+        template<typename CommandDto>
+        void HandleMessage(const CommandDto& command, ServiceLayer::UoW::IUnitOfWork& uow)
+        {
+            Handle(MakeCommand<CommandDto>(command), uow);
+        }
 
         /// @brief Обрабатывает входящее доменное сообщение.
         /// @param message Доменное сообщение.
@@ -50,7 +56,7 @@ namespace Allocation::ServiceLayer
             auto& handlers = _eventHandlers[typeid(T)];
             handlers.emplace_back(
                 [h = std::forward<F>(handler)](
-                    ServiceLayer::UoW::IUnitOfWork& uow, Domain::Events::EventPtr event)
+                    ServiceLayer::UoW::IUnitOfWork& uow, Domain::EventPtr event)
                 {
                     if constexpr (std::is_invocable_v<F, ServiceLayer::UoW::IUnitOfWork&,
                                       std::shared_ptr<T>>)
@@ -70,7 +76,7 @@ namespace Allocation::ServiceLayer
         {
             _commandHandlers[typeid(T)] =
                 [h = std::forward<F>(handler)](ServiceLayer::UoW::IUnitOfWork& uow,
-                    Domain::Commands::CommandPtr cmd) { h(uow, std::static_pointer_cast<T>(cmd)); };
+                    Domain::CommandPtr cmd) { h(uow, std::static_pointer_cast<T>(cmd)); };
         }
 
         /// @brief Очищает все зарегистрированные обработчики событий и команд.
@@ -81,14 +87,14 @@ namespace Allocation::ServiceLayer
         /// @param uow Единица работы для обработки события.
         /// @param event Доменное событие.
         /// @param queue Очередь для новых сообщений.
-        void handleEvent(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Events::EventPtr event,
+        void handleEvent(ServiceLayer::UoW::IUnitOfWork& uow, Domain::EventPtr event,
             std::queue<Domain::IMessagePtr>& queue) noexcept;
 
         /// @brief Обрабатывает входящую команду.
         /// @param uow Единица работы для обработки команды.
         /// @param command Доменная команда.
         /// @param queue Очередь для новых сообщений.
-        void handleCommand(ServiceLayer::UoW::IUnitOfWork& uow, Domain::Commands::CommandPtr command,
+        void handleCommand(ServiceLayer::UoW::IUnitOfWork& uow, Domain::CommandPtr command,
             std::queue<Domain::IMessagePtr>& queue);
 
         std::unordered_map<std::type_index, std::vector<EventHandler>> _eventHandlers;

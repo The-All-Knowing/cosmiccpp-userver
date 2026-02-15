@@ -1,9 +1,7 @@
 #include "Product.hpp"
 
 #include "Common.hpp"
-#include "Domain/Events/Allocated.hpp"
-#include "Domain/Events/Deallocated.hpp"
-#include "Domain/Events/OutOfStock.hpp"
+#include "Domain/Events.hpp"
 
 
 namespace Allocation::Domain
@@ -62,11 +60,10 @@ namespace Allocation::Domain
             auto ref = batch.get().GetReference();
             batch.get().Allocate(line);
             ++_version;
-            _messages.push_back(
-                Make<Events::Allocated>(line.reference, line.sku, line.quantity, ref));
+            _messages.push_back(Make<Allocated>(line.reference, line.sku, line.quantity, ref));
             return batch.get().GetReference();
         }
-        _messages.push_back(Make<Events::OutOfStock>(line.sku));
+        _messages.push_back(Make<OutOfStock>(line.sku));
         return std::nullopt;
     }
 
@@ -82,10 +79,10 @@ namespace Allocation::Domain
         {
             auto order = it->second.DeallocateOne();
             difference += static_cast<int32_t>(order.quantity);
-            _messages.push_back(
-                Make<Events::Deallocated>(order.reference, order.sku, order.quantity));
+            _messages.push_back(Make<Deallocated>(order.reference, order.sku, order.quantity));
         }
         it->second.SetPurchasedQuantity(newQty);
+        ++_version;
     }
 
     std::vector<Batch> Product::GetBatches() const noexcept
@@ -116,16 +113,6 @@ namespace Allocation::Domain
     {
         if (lhs.GetSKU() != rhs.GetSKU() || lhs.GetVersion() != rhs.GetVersion())
             return false;
-        const auto lhsBatches = lhs.GetBatches();
-        if (lhsBatches.size() != rhs.GetBatches().size())
-            return false;
-
-        for (const auto& lhsBatch : lhsBatches)
-        {
-            const auto rhsBatch = rhs.GetBatch(lhsBatch.GetReference());
-            if (!rhsBatch.has_value() || lhsBatch != rhsBatch)
-                return false;
-        }
         return true;
     }
 

@@ -21,6 +21,10 @@ include_directories(src)
 
 add_library(
     ${PROJECT_NAME}_objs OBJECT
+    src/Domain/Commands.cpp
+    src/Domain/Commands.hpp
+    src/Domain/Events.hpp
+    src/Domain/Events.cpp
     src/Domain/Product/OrderLine.hpp
     src/Domain/Product/Batch.hpp
     src/Domain/Product/Batch.cpp
@@ -41,28 +45,50 @@ add_library(
     src/ServiceLayer/MessageBus/Handlers/Handlers.cpp
     src/ServiceLayer/MessageBus/Handlers/Handlers.hpp
     src/ServiceLayer/MessageBus/MessageBus.cpp
-    src/Adapters/MessageBus/MessageBusComponent.cpp
+    src/ServiceLayer/Views.hpp
+    src/ServiceLayer/Views.cpp
+    src/ServiceLayer/CommandFactory.hpp
+    src/ServiceLayer/CommandFactory.cpp
+    src/Entrypoints/REST/AddBatchHandler.hpp
+    src/Entrypoints/REST/AddBatchHandler.cpp
+    src/Entrypoints/REST/AllocateHandler.hpp
+    src/Entrypoints/REST/AllocateHandler.cpp
+    src/Entrypoints/REST/AllocationsViewHandler.hpp
+    src/Entrypoints/REST/AllocationsViewHandler.cpp
 )
+target_precompile_headers(${PROJECT_NAME}_objs PUBLIC ${CMAKE_SOURCE_DIR}/src/Precompile.hpp)
 
 userver_add_sql_library(
     ${PROJECT_NAME}_sql
     NAMESPACE
     Allocation
     SOURCE_DIR
-    ${CMAKE_SOURCE_DIR}/postgresql/queries
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Adapters/Repository/queries
     OUTPUT_DIR
     ${CMAKE_CURRENT_BINARY_DIR}
     SQL_FILES
     *.sql
 )
 
+file(GLOB_RECURSE SCHEMAS ${CMAKE_CURRENT_SOURCE_DIR}/schemas/*.yaml)
+userver_target_generate_chaotic(
+    ${PROJECT_NAME}-chgen
+    # Generate serializers for responses
+    GENERATE_SERIALIZERS
+    # Map '/components/schemas/*' JSONSchema types to C++ types in 'Allocation::STEM' namespace
+    LAYOUT "/components/schemas/([^/]*)/=Allocation::{stem}::{0}"
+    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/src
+    SCHEMAS ${SCHEMAS}
+    RELATIVE_TO ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 target_link_libraries(
     ${PROJECT_NAME}_objs
     PUBLIC
     ${PROJECT_NAME}_sql
+    ${PROJECT_NAME}-chgen
     userver::core
 )
-target_precompile_headers(${PROJECT_NAME}_objs PUBLIC ${CMAKE_SOURCE_DIR}/src/Precompile.hpp)
 
 
 # The Service

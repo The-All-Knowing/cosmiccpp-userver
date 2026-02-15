@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Domain/Events/AbstractEvent.hpp"
+#include "Domain/Events.hpp"
 
 
 namespace Allocation::ServiceLayer::Handlers
@@ -16,7 +16,7 @@ namespace Allocation::ServiceLayer::Handlers
     /// @tparam Message Тип сообщения.
     /// @tparam Publisher Тип отправителя сообщений.
     template <typename Message, PublisherSender<Message> Publisher>
-        requires std::derived_from<Message, Domain::Events::AbstractEvent>
+        requires std::derived_from<Message, Domain::AbstractEvent>
     class PublisherHandler
     {
     public:
